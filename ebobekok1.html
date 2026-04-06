@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>EBOB-EKOK Yarışı - LGS Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@400;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #020617;
+        font-family: "Inter", sans-serif;
+        touch-action: none;
+        color: white;
+      }
+      .orbitron {
+        font-family: "Orbitron", sans-serif;
+      }
+      #game-canvas {
+        display: block;
+      }
+
+      .ui-element {
+        pointer-events: none;
+        user-select: none;
+      }
+
+      /* Titreme efekti */
+      .shake {
+        animation: shake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translate3d(-2px, 0, 0);
+        }
+        20%,
+        80% {
+          transform: translate3d(4px, 0, 0);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-6px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(8px, 0, 0);
+        }
+      }
+
+      #flash-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 40;
+        opacity: 0;
+        transition: opacity 0.1s;
+      }
+
+      .btn-mode {
+        transition: all 0.2s ease;
+      }
+      .btn-mode:hover {
+        transform: scale(1.05);
+      }
+      .btn-mode:active {
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="flash-overlay"></div>
+
+    <!-- Üst Kullanıcı Arayüzü Paneli -->
+    <div
+      class="fixed top-0 left-0 w-full p-6 flex justify-between items-start z-30 ui-element"
+    >
+      <div class="flex flex-col gap-2">
+        <div
+          class="bg-slate-900/90 backdrop-blur-xl p-5 rounded-3xl border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
+        >
+          <div
+            id="mode-label"
+            class="text-[10px] uppercase tracking-widest text-blue-400 font-black"
+          >
+            EBOB MODU
+          </div>
+          <div
+            id="question-display"
+            class="text-3xl font-black text-white orbitron"
+          >
+            EBOB(?, ?) = ?
+          </div>
+          <div
+            class="text-[10px] mt-1 text-slate-500 font-bold uppercase tracking-tighter"
+          >
+            SKOR: <span id="score" class="text-slate-300">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center flex-1 max-w-[240px] mx-8 mt-2">
+        <div
+          class="bg-slate-950/50 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-inner"
+        >
+          <div
+            id="timer-bar"
+            class="h-3 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600 w-full rounded-full transition-all duration-100"
+          ></div>
+        </div>
+        <div
+          id="timer-text"
+          class="text-sm mt-2 font-black orbitron text-blue-400 tracking-widest"
+        >
+          30.0s
+        </div>
+      </div>
+
+      <div
+        class="bg-slate-900/90 backdrop-blur-xl p-5 rounded-3xl border border-yellow-500/30 text-right shadow-[0_0_20px_rgba(234,179,8,0.1)]"
+      >
+        <div
+          class="text-[10px] uppercase tracking-widest text-yellow-500 font-black"
+        >
+          REKOR
+        </div>
+        <div id="high-score" class="text-3xl font-black text-white orbitron">
+          0
+        </div>
+      </div>
+    </div>
+
+    <!-- Başlangıç ve Seçim Ekranı -->
+    <div
+      id="overlay"
+      class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center text-center p-6 backdrop-blur-xl"
+    >
+      <div id="start-screen">
+        <h1
+          class="text-6xl font-black mb-6 orbitron bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500"
+        >
+          EBOB-EKOK YARIŞI
+        </h1>
+        <p
+          class="text-xl mb-10 text-slate-400 max-w-lg mx-auto leading-relaxed"
+        >
+          Bir mod seç ve gelen sayıların sonucunu bulup
+          <span class="text-white font-bold">doğru kapıdan</span> geç! <br />
+          <span class="text-red-400 font-bold text-sm uppercase mt-2 block"
+            >Dikkat: Ortadan boş geçmek elenmene sebep olur!</span
+          >
+        </p>
+
+        <div class="flex gap-6 justify-center">
+          <button
+            onclick="prepareGame('ebob')"
+            class="btn-mode px-12 py-6 bg-blue-600 rounded-3xl font-black text-2xl shadow-[0_10px_0_rgb(29,78,216)] border-2 border-blue-400"
+          >
+            EBOB MODU
+          </button>
+          <button
+            onclick="prepareGame('ekok')"
+            class="btn-mode px-12 py-6 bg-purple-600 rounded-3xl font-black text-2xl shadow-[0_10px_0_rgb(126,34,206)] border-2 border-purple-400"
+          >
+            EKOK MODU
+          </button>
+        </div>
+      </div>
+
+      <div id="game-over-screen" class="hidden">
+        <div class="text-8xl mb-6">🏁</div>
+        <h1
+          class="text-6xl font-black mb-4 text-red-500 orbitron tracking-tighter"
+          id="game-over-title"
+        >
+          SÜRE DOLDU!
+        </h1>
+        <p class="text-2xl text-slate-400 mb-10">
+          Toplam Skorun:
+          <span id="final-score" class="text-white font-bold orbitron">0</span>
+        </p>
+        <button
+          onclick="resetToMenu()"
+          class="px-16 py-6 bg-slate-700 hover:bg-slate-600 rounded-3xl font-black text-2xl transition-all transform hover:-translate-y-2 border-2 border-slate-500 shadow-[0_10px_0_rgb(30,41,59)]"
+        >
+          ANA MENÜ
+        </button>
+      </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+      // --- MATEMATİK FONKSİYONLARI ---
+      const getGCD = (a, b) => (b === 0 ? a : getGCD(b, a % b));
+      const getLCM = (a, b) => (a * b) / getGCD(a, b);
+
+      // --- SES SİSTEMİ (Web Audio API) ---
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      let musicInterval = null;
+
+      function playSfx(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioCtx.currentTime + duration,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      const sounds = {
+        correct: () => {
+          playSfx(523, "sine", 0.1);
+          setTimeout(() => playSfx(659, "sine", 0.1), 60);
+        },
+        wrong: () => playSfx(150, "sawtooth", 0.3, 0.2),
+        start: () =>
+          [440, 554, 659, 880].forEach((f, i) =>
+            setTimeout(() => playSfx(f, "sine", 0.4, 0.05), i * 100),
+          ),
+
+        // Fon Müziği Döngüsü
+        playMusic: () => {
+          if (musicInterval) return;
+          let step = 0;
+          musicInterval = setInterval(() => {
+            if (!gameActive) {
+              clearInterval(musicInterval);
+              musicInterval = null;
+              return;
+            }
+
+            // Bas Ritmi
+            if (step % 4 === 0) {
+              playSfx(60, "triangle", 0.2, 0.08);
+            }
+
+            // Ritmik Süsleme
+            if (step % 2 === 1) {
+              playSfx(2000, "sine", 0.02, 0.02);
+            }
+
+            // Melodik Pulse
+            if (step % 8 === 0) {
+              const baseFreq = gameMode === "ebob" ? 110 : 130;
+              playSfx(baseFreq, "square", 0.1, 0.03);
+            }
+
+            step = (step + 1) % 16;
+          }, 150);
+        },
+      };
+
+      // --- OYUN DEĞİŞKENLERİ ---
+      const canvas = document.getElementById("game-canvas");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const timerBar = document.getElementById("timer-bar");
+      const timerText = document.getElementById("timer-text");
+      const highScoreEl = document.getElementById("high-score");
+      const questionEl = document.getElementById("question-display");
+      const modeLabel = document.getElementById("mode-label");
+      const flashOverlay = document.getElementById("flash-overlay");
+
+      let gameActive = false;
+      let gameMode = "ebob";
+      let score = 0;
+      let highScore = localStorage.getItem("ebobEkokHighScore") || 0;
+      let timeLeft = 30;
+      let playerX = 0;
+      let gates = [];
+      let particles = [];
+      let bgSymbols = [];
+      let lastTime = 0;
+      let spawnTimer = 0;
+      let currentNumbers = { a: 0, b: 0, result: 0 };
+
+      function init() {
+        resize();
+        playerX = canvas.width / 2;
+        window.addEventListener("resize", resize);
+        highScoreEl.innerText = highScore;
+
+        // Arka plan sembollerini hazırla
+        const syms = ["?", "gcd", "lcm", "=", "÷", "×", "12", "18", "24"];
+        for (let i = 0; i < 30; i++) {
+          bgSymbols.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            txt: syms[Math.floor(Math.random() * syms.length)],
+            s: Math.random() * 20 + 10,
+            v: Math.random() * 0.4 + 0.1,
+            op: Math.random() * 0.1 + 0.02,
+          });
+        }
+
+        window.addEventListener("mousemove", (e) => (playerX = e.clientX));
+        window.addEventListener(
+          "touchmove",
+          (e) => {
+            if (e.touches[0]) playerX = e.touches[0].clientX;
+          },
+          { passive: false },
+        );
+
+        requestAnimationFrame(menuLoop);
+      }
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function menuLoop() {
+        if (gameActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        requestAnimationFrame(menuLoop);
+      }
+
+      function prepareGame(mode) {
+        gameMode = mode;
+        modeLabel.innerText = mode === "ebob" ? "EBOB MODU" : "EKOK MODU";
+        modeLabel.style.color = mode === "ebob" ? "#60a5fa" : "#a855f7";
+        startGame();
+      }
+
+      function resetToMenu() {
+        document.getElementById("game-over-screen").classList.add("hidden");
+        document.getElementById("start-screen").classList.remove("hidden");
+      }
+
+      function startGame() {
+        score = 0;
+        timeLeft = 30;
+        gates = [];
+        particles = [];
+        gameActive = true;
+        document.getElementById("overlay").classList.add("hidden");
+        sounds.start();
+        sounds.playMusic();
+        generateNewQuestion();
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+      }
+
+      function generateNewQuestion() {
+        let a, b;
+        const level = Math.floor(score / 100);
+
+        if (gameMode === "ebob") {
+          const multipliers = [2, 3, 4, 5, 6, 8, 10];
+          const gcd =
+            multipliers[
+              Math.floor(
+                Math.random() * Math.min(multipliers.length, 2 + level),
+              )
+            ];
+          a = gcd * (Math.floor(Math.random() * 6) + 1);
+          b = gcd * (Math.floor(Math.random() * 6) + 1);
+          if (a === b) b += gcd;
+          currentNumbers = { a, b, result: getGCD(a, b) };
+        } else {
+          a = Math.floor(Math.random() * (6 + level)) + 2;
+          b = Math.floor(Math.random() * (6 + level)) + 2;
+          if (a === b) b++;
+          currentNumbers = { a, b, result: getLCM(a, b) };
+        }
+
+        questionEl.innerText = `${gameMode.toUpperCase()}(${currentNumbers.a}, ${currentNumbers.b}) = ?`;
+      }
+
+      function spawnGates() {
+        const laneWidth = canvas.width / 2;
+        const y = -150;
+        // Kapı hızı yavaşlatıldı
+        const speed = 2.25 + score / 4000;
+        const correctResult = currentNumbers.result;
+
+        let wrongResult;
+        const choice = Math.random();
+        if (choice > 0.6) {
+          wrongResult = correctResult + (Math.random() > 0.5 ? 2 : -1);
+        } else if (choice > 0.3) {
+          wrongResult = correctResult * 2;
+        } else {
+          wrongResult = Math.max(
+            1,
+            correctResult - Math.floor(Math.random() * 5),
+          );
+        }
+        if (wrongResult === correctResult) wrongResult += 3;
+
+        const isCorrectOnLeft = Math.random() > 0.5;
+        const gateWidth = 200;
+        const waveId = Date.now();
+
+        gates.push({
+          x: laneWidth * 0.5,
+          y,
+          val: isCorrectOnLeft ? correctResult : wrongResult,
+          isCorrect: isCorrectOnLeft,
+          speed,
+          w: gateWidth,
+          color: "#3b82f6",
+          waveId,
+          hitChecked: false,
+        });
+        gates.push({
+          x: laneWidth * 1.5,
+          y,
+          val: isCorrectOnLeft ? wrongResult : correctResult,
+          isCorrect: !isCorrectOnLeft,
+          speed,
+          w: gateWidth,
+          color: "#3b82f6",
+          waveId,
+          hitChecked: false,
+        });
+      }
+
+      function triggerFlash(color, isBad = false) {
+        flashOverlay.style.background = color;
+        flashOverlay.style.opacity = "0.3";
+        setTimeout(() => (flashOverlay.style.opacity = "0"), 150);
+        if (isBad) {
+          document.body.classList.add("shake");
+          setTimeout(() => document.body.classList.remove("shake"), 250);
+        }
+      }
+
+      function drawBackground() {
+        bgSymbols.forEach((s) => {
+          ctx.globalAlpha = s.op;
+          ctx.fillStyle = "white";
+          ctx.font = `${s.s}px Orbitron`;
+          ctx.textAlign = "center";
+          ctx.fillText(s.txt, s.x, s.y);
+          s.y += s.v;
+          if (s.y > canvas.height + 50) s.y = -50;
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function gameLoop(timestamp) {
+        if (!gameActive) return;
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+
+        timeLeft -= dt / 1000;
+        if (timeLeft <= 0) {
+          endGame("SÜRE DOLDU!");
+          return;
+        }
+
+        scoreEl.innerText = score;
+        timerBar.style.width = (timeLeft / 30) * 100 + "%";
+        timerText.innerText = timeLeft.toFixed(1) + "s";
+
+        spawnTimer += dt;
+        // Kapı gelme sıklığı azaltıldı
+        const currentSpawnRate = Math.max(2000, 4000 - score / 5);
+        if (spawnTimer > currentSpawnRate) {
+          spawnGates();
+          spawnTimer = 0;
+        }
+
+        const playerY = canvas.height - 140;
+        let collisionOccurred = false;
+        let activeWaveId = -1;
+
+        for (let i = gates.length - 1; i >= 0; i--) {
+          const g = gates[i];
+          g.y += g.speed;
+
+          ctx.save();
+          ctx.translate(g.x, g.y);
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = g.color;
+          ctx.strokeStyle = g.color;
+          ctx.lineWidth = 4;
+
+          ctx.beginPath();
+          ctx.roundRect(-g.w / 2, -50, g.w, 100, 20);
+          ctx.stroke();
+          ctx.globalAlpha = 0.1;
+          ctx.fillStyle = g.color;
+          ctx.fill();
+
+          // RAKAM BOYUTU BÜYÜK (64px)
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "white";
+          ctx.font = "black 64px Orbitron";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(g.val, 0, 0);
+          ctx.restore();
+
+          // Çarpışma ve Ortadan Geçme Kontrolü
+          if (!g.hitChecked && g.y > playerY - 50 && g.y < playerY + 50) {
+            activeWaveId = g.waveId;
+            if (Math.abs(playerX - g.x) < g.w / 2) {
+              handleHit(g);
+              collisionOccurred = true;
+            }
+          }
+
+          // Kapı karakteri geçtiyse ve ortadan geçtiyse
+          if (!g.hitChecked && g.y > playerY + 60) {
+            endGame("ORTADAN GEÇTİN!");
+            return;
+          }
+
+          if (g.y > canvas.height + 200) gates.splice(i, 1);
+        }
+
+        if (collisionOccurred) {
+          gates.forEach((gate) => {
+            if (gate.waveId === activeWaveId) gate.hitChecked = true;
+          });
+        }
+
+        const pSize = 70;
+        const pColor = gameMode === "ebob" ? "#60a5fa" : "#a855f7";
+        ctx.save();
+        ctx.translate(playerX, playerY);
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = pColor;
+        ctx.fillStyle = pColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        const pGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, pSize / 2);
+        pGrad.addColorStop(0, "white");
+        pGrad.addColorStop(0.4, pColor);
+        pGrad.addColorStop(1, "transparent");
+        ctx.fillStyle = pGrad;
+        ctx.fill();
+        ctx.restore();
+
+        // Parçacık efektleri
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.l -= 0.02;
+          if (p.l <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+          ctx.globalAlpha = p.l;
+          ctx.fillStyle = p.c;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function handleHit(g) {
+        if (g.isCorrect) {
+          score += 50;
+          timeLeft = Math.min(30, timeLeft + 4);
+          sounds.correct();
+          triggerFlash("rgba(34, 197, 94, 0.3)");
+          createParticles(playerX, canvas.height - 140, "#4ade80", 20);
+          generateNewQuestion();
+        } else {
+          score = Math.max(0, score - 25);
+          timeLeft -= 8;
+          sounds.wrong();
+          triggerFlash("rgba(239, 68, 68, 0.5)", true);
+          createParticles(playerX, canvas.height - 140, "#ef4444", 25);
+          generateNewQuestion();
+        }
+      }
+
+      function createParticles(x, y, c, count) {
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x,
+            y,
+            c,
+            vx: (Math.random() - 0.5) * 18,
+            vy: (Math.random() - 0.5) * 18,
+            s: Math.random() * 6 + 1,
+            l: 1.0,
+          });
+        }
+      }
+
+      function endGame(reason) {
+        gameActive = false;
+        document.getElementById("game-over-title").innerText = reason;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem("ebobEkokHighScore", highScore);
+          highScoreEl.innerText = highScore;
+        }
+        document.getElementById("final-score").innerText = score;
+        document.getElementById("overlay").classList.remove("hidden");
+        document.getElementById("game-over-screen").classList.remove("hidden");
+        document.getElementById("start-screen").classList.add("hidden");
+      }
+
+      init();
+    </script>
+  </body>
+</html>

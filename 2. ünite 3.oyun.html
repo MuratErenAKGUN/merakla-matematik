@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Üslü Kule Tırmanışı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;700&display=swap");
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #020617;
+        font-family: "Inter", sans-serif;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      canvas {
+        background: linear-gradient(to bottom, #020617, #0f172a, #1e1b4b);
+        display: block;
+        border: 4px solid #6366f1;
+        border-radius: 20px;
+        box-shadow: 0 0 80px rgba(99, 102, 241, 0.4);
+        max-width: 100%;
+        max-height: 90vh;
+      }
+
+      .ui-panel {
+        position: absolute;
+        top: 20px;
+        pointer-events: none;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 40px;
+      }
+
+      .stats {
+        background: rgba(15, 23, 42, 0.85);
+        padding: 12px 24px;
+        border-radius: 18px;
+        color: white;
+        border: 2px solid #6366f1;
+        backdrop-filter: blur(10px);
+        font-family: "Bungee", cursive;
+        font-size: 14px;
+        letter-spacing: 1px;
+      }
+
+      #target-box {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: #1e1b4b;
+        padding: 18px 45px;
+        border-radius: 28px;
+        font-family: "Bungee", cursive;
+        font-size: 34px;
+        box-shadow:
+          0 8px 0 #b45309,
+          0 0 40px rgba(245, 158, 11, 0.5);
+        z-index: 10;
+        text-align: center;
+        min-width: 240px;
+      }
+
+      #overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.96);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        color: white;
+        text-align: center;
+      }
+
+      .btn-start {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        padding: 20px 60px;
+        border-radius: 50px;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        margin-top: 30px;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-family: "Bungee", cursive;
+        box-shadow: 0 8px 0 #312e81;
+      }
+
+      .btn-start:hover {
+        transform: scale(1.08) translateY(-4px);
+        filter: brightness(1.1);
+      }
+
+      kbd {
+        background: #1e293b;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border-bottom: 4px solid #0f172a;
+        font-family: monospace;
+        color: #f8fafc;
+        margin: 0 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="target-box">HEDEF: <span id="target-val">?</span></div>
+
+      <div class="ui-panel">
+        <div class="stats">PUAN: <span id="score-val">0</span></div>
+        <div class="stats">KAT: <span id="height-val">0</span></div>
+      </div>
+
+      <canvas id="gameCanvas"></canvas>
+
+      <div id="overlay">
+        <h1
+          style="
+            font-family: &quot;Bungee&quot;, cursive;
+            font-size: 60px;
+            color: #6366f1;
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+          "
+        >
+          ÜSLÜ KULE TIRMANIŞI
+        </h1>
+        <p
+          style="
+            margin-top: 15px;
+            max-width: 500px;
+            color: #94a3b8;
+            font-size: 19px;
+          "
+        >
+          Doğru üslü ifadeyi seç, şövalyeni zirveye taşı!
+        </p>
+        <div
+          style="
+            margin: 35px;
+            font-size: 16px;
+            color: #cbd5e1;
+            line-height: 2.2;
+          "
+        >
+          Kontroller: <kbd>A</kbd><kbd>D</kbd> veya <kbd>SOL</kbd
+          ><kbd>SAĞ OK</kbd><br />
+          Zıplama: <kbd>W</kbd><kbd>Space</kbd> veya <kbd>YUKARI OK</kbd>
+        </div>
+        <button class="btn-start" onclick="startGame()">BAŞLA</button>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const targetText = document.getElementById("target-val");
+      const scoreText = document.getElementById("score-val");
+      const heightText = document.getElementById("height-val");
+      const overlay = document.getElementById("overlay");
+
+      canvas.width = 500;
+      canvas.height = 750;
+
+      let gameActive = false;
+      let score = 0;
+      let cameraY = 0;
+      let particles = [];
+      let platforms = [];
+      let currentTargetValue = 0;
+      let currentTargetLayer = 0;
+      let lastTargetValue = -1;
+
+      const platformWidth = 170;
+      const platformHeight = 28;
+      const layerDistance = 280;
+
+      // Modern Şövalye Karakteri
+      const player = {
+        x: canvas.width / 2 - 20,
+        y: canvas.height - 180,
+        width: 40,
+        height: 56,
+        vx: 0,
+        vy: 0,
+        speed: 8.5,
+        jumpPower: -22,
+        gravity: 0.75,
+        isGrounded: false,
+        animFrame: 0,
+        facing: 1, // 1: sağ, -1: sol
+      };
+
+      const keys = {};
+      window.addEventListener("keydown", (e) => (keys[e.code] = true));
+      window.addEventListener("keyup", (e) => (keys[e.code] = false));
+
+      let audioCtx;
+      function initAudio() {
+        if (!audioCtx)
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      function playSound(freq, type, duration, vol) {
+        if (!audioCtx || audioCtx.state === "suspended") return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioCtx.currentTime + duration,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      function addPlatformLayer(y, layerIndex) {
+        let baseCorrect, expCorrect, valCorrect;
+
+        do {
+          baseCorrect = [2, 3, 4, 5, 10][Math.floor(Math.random() * 5)];
+          expCorrect = Math.floor(Math.random() * 4) + 1;
+          valCorrect = Math.pow(baseCorrect, expCorrect);
+        } while (valCorrect === lastTargetValue);
+
+        lastTargetValue = valCorrect;
+
+        let baseWrong, expWrong, valWrong;
+        do {
+          baseWrong = [2, 3, 4, 5, 10][Math.floor(Math.random() * 5)];
+          expWrong = Math.floor(Math.random() * 5);
+          valWrong = Math.pow(baseWrong, expWrong);
+        } while (valWrong === valCorrect);
+
+        const p1 = {
+          x: 40,
+          y: y,
+          width: platformWidth,
+          height: platformHeight,
+          base: baseCorrect,
+          exp: expCorrect,
+          value: valCorrect,
+          isTarget: true,
+          layer: layerIndex,
+          color: "#1e293b",
+        };
+
+        const p2 = {
+          x: canvas.width - platformWidth - 40,
+          y: y,
+          width: platformWidth,
+          height: platformHeight,
+          base: baseWrong,
+          exp: expWrong,
+          value: valWrong,
+          isTarget: false,
+          layer: layerIndex,
+          color: "#1e293b",
+        };
+
+        if (Math.random() > 0.5) {
+          const tempX = p1.x;
+          p1.x = p2.x;
+          p2.x = tempX;
+        }
+
+        platforms.push(p1, p2);
+
+        if (layerIndex === currentTargetLayer + 1) {
+          currentTargetValue = valCorrect;
+          targetText.innerText = currentTargetValue;
+        }
+      }
+
+      function startGame() {
+        initAudio();
+        overlay.style.display = "none";
+        gameActive = true;
+        score = 0;
+        cameraY = 0;
+        currentTargetLayer = 0;
+        lastTargetValue = -1;
+        player.x = canvas.width / 2 - 20;
+        player.y = canvas.height - 200;
+        player.vx = 0;
+        player.vy = 0;
+        player.isGrounded = false;
+        platforms = [];
+
+        platforms.push({
+          x: canvas.width / 2 - 130,
+          y: canvas.height - 120,
+          width: 260,
+          height: 28,
+          value: null,
+          text: "BAŞLANGIÇ",
+          layer: 0,
+          color: "#6366f1",
+        });
+
+        for (let i = 1; i <= 6; i++) {
+          addPlatformLayer(canvas.height - 120 - i * layerDistance, i);
+        }
+
+        const firstLayerCorrect = platforms.find(
+          (p) => p.layer === 1 && p.isTarget,
+        );
+        currentTargetValue = firstLayerCorrect.value;
+        targetText.innerText = currentTargetValue;
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function update() {
+        if (!gameActive) return;
+
+        player.animFrame += 0.15;
+
+        // Hareket Kontrolü
+        if (keys["ArrowLeft"] || keys["KeyA"]) {
+          player.vx = -player.speed;
+          player.facing = -1;
+        } else if (keys["ArrowRight"] || keys["KeyD"]) {
+          player.vx = player.speed;
+          player.facing = 1;
+        } else {
+          player.vx *= 0.82;
+        }
+
+        player.x += player.vx;
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width)
+          player.x = canvas.width - player.width;
+
+        player.vy += player.gravity;
+        player.y += player.vy;
+
+        // Manuel Zıplama
+        if (
+          (keys["Space"] || keys["ArrowUp"] || keys["KeyW"]) &&
+          player.isGrounded
+        ) {
+          player.vy = player.jumpPower;
+          player.isGrounded = false;
+          playSound(220, "triangle", 0.15, 0.1);
+        }
+
+        player.isGrounded = false;
+        platforms.forEach((p) => {
+          if (
+            player.vy >= 0 &&
+            player.y + player.height > p.y &&
+            player.y + player.height < p.y + p.height + player.vy &&
+            player.x + player.width > p.x &&
+            player.x < p.x + p.width
+          ) {
+            player.y = p.y - player.height;
+            player.vy = 0;
+            player.isGrounded = true;
+
+            if (p.layer > 0) {
+              if (p.value === currentTargetValue) {
+                if (p.layer > currentTargetLayer) {
+                  score += 10;
+                  currentTargetLayer = p.layer;
+                  playSound(920, "sine", 0.2, 0.1);
+                  createConfetti(p.x + p.width / 2, p.y);
+
+                  const highestY = Math.min(...platforms.map((pl) => pl.y));
+                  addPlatformLayer(
+                    highestY - layerDistance,
+                    currentTargetLayer + 6,
+                  );
+
+                  const nextLayerCorrect = platforms.find(
+                    (pl) => pl.layer === currentTargetLayer + 1 && pl.isTarget,
+                  );
+                  if (nextLayerCorrect) {
+                    currentTargetValue = nextLayerCorrect.value;
+                    targetText.innerText = currentTargetValue;
+                  }
+                }
+              } else if (p.layer === currentTargetLayer + 1) {
+                gameOver("Yanlış basamak! Doğru cevap bu değildi.");
+              }
+            }
+          }
+        });
+
+        // KAMERA SİSTEMİ: Karakter her zaman dikeyde ortada kalır
+        // Smooth (yumuşak) takip için lerp kullanılabilir ama direkt eşitleme istendi
+        cameraY = player.y - canvas.height * 0.6;
+
+        // Basamak Temizliği
+        platforms = platforms.filter(
+          (p) => p.y < cameraY + canvas.height + 400,
+        );
+
+        scoreText.innerText = score;
+        heightText.innerText = currentTargetLayer;
+
+        // Kule'den aşağı düşme (Çok aşağıda kalırsa)
+        if (player.y > cameraY + canvas.height + 200) {
+          gameOver("Kule'den düştün!");
+        }
+
+        particles.forEach((p, i) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.a -= 0.025;
+          if (p.a <= 0) particles.splice(i, 1);
+        });
+      }
+
+      function createConfetti(x, y) {
+        for (let i = 0; i < 20; i++) {
+          particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.5) * 12,
+            a: 1,
+            c: `hsl(${Math.random() * 360}, 80%, 65%)`,
+          });
+        }
+      }
+
+      // --- KARAKTER ÇİZİMİ ---
+      function drawPlayer(ctx, px, py, pw, ph) {
+        ctx.save();
+
+        // Karakterin baktığı yöne göre çevir
+        if (player.facing === -1) {
+          ctx.translate(px + pw, py);
+          ctx.scale(-1, 1);
+        } else {
+          ctx.translate(px, py);
+        }
+
+        const jumpOffset = player.vy < 0 ? -4 : 0;
+        const tilt = player.vx * 0.02;
+        ctx.rotate(tilt);
+
+        // 1. Pelerin (Dinamik Hareket)
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        const capeWav = Math.sin(player.animFrame * 1.5) * 6;
+        ctx.moveTo(pw * 0.2, ph * 0.3);
+        ctx.quadraticCurveTo(
+          pw * -0.4 + capeWav,
+          ph * 0.6,
+          pw * -0.5 + capeWav,
+          ph * 1.1 + player.vy * 0.4,
+        );
+        ctx.lineTo(pw * 0.3, ph * 0.9);
+        ctx.fill();
+
+        // 2. Bacaklar
+        ctx.fillStyle = "#1e293b";
+        const walkCycle = Math.sin(player.animFrame * 1.2) * 5;
+        ctx.fillRect(pw * 0.2, ph * 0.7, 8, 12 + (player.isGrounded ? 0 : 4));
+        ctx.fillRect(pw * 0.6, ph * 0.7, 8, 12 + (player.isGrounded ? 0 : -4));
+
+        // 3. Gövde (Zırh)
+        ctx.fillStyle = "#475569"; // Gri Zırh
+        ctx.beginPath();
+        ctx.roundRect(0, ph * 0.25, pw, ph * 0.5, 10);
+        ctx.fill();
+
+        // Göğüs Plakası (Altın Detay)
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillRect(pw * 0.3, ph * 0.35, pw * 0.4, 6);
+
+        // 4. Kafa ve Kask
+        ctx.fillStyle = "#94a3b8"; // Metalik Kask
+        ctx.beginPath();
+        ctx.arc(pw * 0.5, ph * 0.15, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Vizör (Gözlük kısmı)
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(pw * 0.3, ph * 0.1, pw * 0.5, 6);
+
+        // 5. Kollar
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        // Sağ kol (Zıplama pozisyonuna göre değişir)
+        ctx.moveTo(pw * 0.8, ph * 0.35);
+        ctx.lineTo(pw * 1.1, ph * (player.vy < 0 ? 0.1 : 0.5));
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(0, -cameraY);
+
+        // Arkaplan Yıldızlar (Kamera ile kayar)
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        const starOffset = cameraY * 0.2; // Paralaks etkisi
+        for (let i = 0; i < 50; i++) {
+          const sX = (i * 197) % canvas.width;
+          const sY =
+            ((((i * 311 - starOffset) % 1500) + 1500) % 1500) + cameraY - 400;
+          ctx.beginPath();
+          ctx.arc(sX, sY, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Basamaklar
+        platforms.forEach((p) => {
+          const isCorrect = p.layer <= currentTargetLayer;
+          ctx.fillStyle =
+            p.layer === 0 ? p.color : isCorrect ? "#10b981" : p.color;
+
+          // Basamak Parlaması (Glow)
+          if (isCorrect && p.layer > 0) {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#10b981";
+          }
+
+          ctx.beginPath();
+          ctx.roundRect(p.x, p.y, p.width, p.height, 10);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Üst Çizgi Efekti
+          ctx.fillStyle = "rgba(255,255,255,0.15)";
+          ctx.fillRect(p.x, p.y, p.width, 3);
+
+          // Metin Çizimi
+          ctx.fillStyle = "white";
+          ctx.textAlign = "center";
+          if (p.text) {
+            ctx.font = "bold 18px Inter";
+            ctx.fillText(p.text, p.x + p.width / 2, p.y + 20);
+          } else {
+            const base = p.base.toString();
+            const exp = p.exp.toString();
+            ctx.font = "bold 20px Inter";
+            const bW = ctx.measureText(base).width;
+            ctx.fillText(base, p.x + p.width / 2 - 6, p.y + 21);
+            ctx.font = "bold 13px Inter";
+            ctx.fillText(exp, p.x + p.width / 2 + bW / 2 + 3, p.y + 13);
+          }
+        });
+
+        // Parçacıklar
+        particles.forEach((p) => {
+          ctx.globalAlpha = p.a;
+          ctx.fillStyle = p.c;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // Karakter
+        drawPlayer(ctx, player.x, player.y, player.width, player.height);
+
+        ctx.restore();
+      }
+
+      function gameOver(reason) {
+        gameActive = false;
+        playSound(110, "sawtooth", 0.6, 0.2);
+        overlay.style.display = "flex";
+        overlay.innerHTML = `
+                <h1 style="font-family: 'Bungee', cursive; font-size: 60px; color: #ef4444; text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);">OYUN BİTTİ</h1>
+                <p style="margin-top: 15px; color: #94a3b8; font-size: 20px;">${reason}</p>
+                <div style="margin: 30px; font-size: 40px; color: #f59e0b; font-family: 'Bungee', cursive;">SKOR: ${score}</div>
+                <button class="btn-start" onclick="startGame()">TEKRAR DENE</button>
+            `;
+      }
+
+      function gameLoop() {
+        update();
+        draw();
+        if (gameActive) requestAnimationFrame(gameLoop);
+      }
+
+      // İlk kare
+      draw();
+    </script>
+  </body>
+</html>

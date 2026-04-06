@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Üs Birleştirici - Akıcı Mod</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap");
+
+      body {
+        font-family: "Quicksand", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .tile {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+      }
+
+      .tile:hover {
+        transform: translateY(-3px);
+        filter: brightness(1.1);
+      }
+
+      /* Seçili Karo */
+      .tile.selected {
+        outline: 4px solid white;
+        transform: scale(1.05);
+        z-index: 10;
+      }
+
+      .mode-badge {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .no-scroll {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Üslerin (Sup) düzgün konumlanması için özel stil */
+      .exponent-container {
+        display: flex;
+        align-items: flex-start;
+        line-height: 1;
+      }
+
+      .base-text {
+        line-height: 1;
+      }
+
+      .exp-text {
+        font-size: 0.6em;
+        margin-top: -0.2em;
+        margin-left: 2px;
+      }
+
+      /* Başarı anında parlama efekti */
+      .success-flash {
+        animation: success-pulse 0.5s ease-out;
+      }
+
+      @keyframes success-pulse {
+        0% {
+          background-color: transparent;
+        }
+        50% {
+          background-color: rgba(16, 185, 129, 0.3);
+        }
+        100% {
+          background-color: transparent;
+        }
+      }
+    </style>
+  </head>
+  <body class="no-scroll p-2 md:p-6">
+    <!-- Header -->
+    <header class="text-center mb-4">
+      <h1
+        class="text-2xl md:text-3xl font-bold text-indigo-400 uppercase tracking-tighter"
+      >
+        ÜS BİRLEŞTİRİCİ
+      </h1>
+      <p class="text-slate-500 text-xs md:text-sm italic">
+        "Doğru cevabı bul, seviyeler arasında hızla ilerle!"
+      </p>
+    </header>
+
+    <main
+      id="main-container"
+      class="flex-1 max-w-5xl w-full mx-auto flex flex-col md:flex-row gap-6 overflow-hidden p-2 rounded-[2.5rem] transition-colors duration-500"
+    >
+      <!-- Sol Panel: Görev Bilgisi -->
+      <div class="md:w-1/3 flex flex-col justify-center space-y-4">
+        <div
+          id="task-card"
+          class="bg-slate-800 p-8 rounded-[2.5rem] border-2 border-indigo-500/30 text-center shadow-2xl relative overflow-hidden"
+        >
+          <div
+            id="mode-indicator"
+            class="mode-badge bg-indigo-500 text-white mb-4 inline-block"
+          >
+            YÜKLENİYOR...
+          </div>
+
+          <span
+            class="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-2"
+            >HEDEF SONUÇ</span
+          >
+          <div class="text-6xl font-bold mb-4 flex justify-center items-start">
+            <span id="target-base">2</span>
+            <span id="target-exp" class="text-3xl text-indigo-300 ml-1 mt-1"
+              >5</span
+            >
+          </div>
+
+          <div
+            id="instruction-text"
+            class="text-xs text-slate-400 bg-slate-900/50 p-3 rounded-xl italic"
+          >
+            İşlemi tamamlamak için 2 karo seç.
+          </div>
+        </div>
+
+        <!-- Skor ve Bilgi -->
+        <div class="grid grid-cols-2 gap-4">
+          <div
+            class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 text-center"
+          >
+            <span class="text-[8px] text-slate-500 uppercase block">SKOR</span>
+            <span id="score" class="text-xl font-bold text-yellow-400">0</span>
+          </div>
+          <div
+            class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 text-center"
+          >
+            <span class="text-[8px] text-slate-500 uppercase block"
+              >SEVİYE</span
+            >
+            <span id="level" class="text-xl font-bold text-white">1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sağ Panel: Oyun Alanı -->
+      <div class="md:w-2/3 flex flex-col overflow-hidden">
+        <div
+          id="grid"
+          class="flex-1 bg-slate-900/40 rounded-[2.5rem] p-4 md:p-6 grid grid-cols-3 sm:grid-cols-4 gap-3 md:gap-4 border border-slate-800"
+        >
+          <!-- Tiles -->
+        </div>
+
+        <!-- İşlem Önizleme Barı -->
+        <div
+          id="preview-bar"
+          class="mt-4 bg-indigo-950/20 border border-indigo-500/20 p-4 rounded-2xl text-center min-h-[60px] flex items-center justify-center"
+        >
+          <div
+            id="preview-content"
+            class="text-lg font-bold text-indigo-300 italic"
+          >
+            Başlamak için bir karo seçin...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      let score = 0;
+      let level = 1;
+      let gameMode = "mul";
+      let targetBase = 2;
+      let targetExp = 0;
+      let tiles = [];
+      let selectedIndices = [];
+      let isTransitioning = false;
+
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === "suspended") return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioCtx.currentTime + duration,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      function initLevel() {
+        tiles = [];
+        selectedIndices = [];
+        isTransitioning = false;
+        document.getElementById("grid").innerHTML = "";
+        document.getElementById("preview-content").innerText =
+          "Başlamak için bir karo seçin...";
+        document
+          .getElementById("main-container")
+          .classList.remove("success-flash");
+
+        // Rastgele İşlem Modu Seçimi
+        gameMode = Math.random() > 0.5 ? "mul" : "div";
+
+        const modeInd = document.getElementById("mode-indicator");
+        const instText = document.getElementById("instruction-text");
+        const taskCard = document.getElementById("task-card");
+
+        if (gameMode === "mul") {
+          modeInd.innerText = "GÖREV: ÇARPMA";
+          modeInd.className =
+            "mode-badge bg-cyan-600 text-white mb-4 inline-block";
+          instText.innerHTML = "Çarpımda üsler toplanır.";
+          taskCard.style.borderColor = "rgba(8, 145, 178, 0.5)";
+        } else {
+          modeInd.innerText = "GÖREV: BÖLME";
+          modeInd.className =
+            "mode-badge bg-rose-600 text-white mb-4 inline-block";
+          instText.innerHTML = "Bölmede üsler çıkarılır.";
+          taskCard.style.borderColor = "rgba(225, 29, 72, 0.5)";
+        }
+
+        // Taban ve Hedef Üs
+        targetBase = [2, 3, 5][Math.floor(Math.random() * 3)];
+        targetExp =
+          gameMode === "mul"
+            ? Math.floor(Math.random() * 7) + 3
+            : Math.floor(Math.random() * 5) + 1;
+
+        document.getElementById("target-base").innerText = targetBase;
+        document.getElementById("target-exp").innerText = targetExp;
+        document.getElementById("level").innerText = level;
+
+        // Çözüm Karoları Üretimi
+        let s1, s2;
+        if (gameMode === "mul") {
+          s1 = Math.floor(Math.random() * (targetExp - 1)) + 1;
+          s2 = targetExp - s1;
+        } else {
+          s2 = Math.floor(Math.random() * 5) + 1;
+          s1 = targetExp + s2;
+        }
+
+        // Havuz Oluştur
+        let pool = [
+          { b: targetBase, e: s1 },
+          { b: targetBase, e: s2 },
+        ];
+        while (pool.length < 12) {
+          let e = Math.floor(Math.random() * 12) + 1;
+          let b = Math.random() > 0.8 ? (targetBase === 2 ? 3 : 2) : targetBase;
+          pool.push({ b, e });
+        }
+
+        // Karıştır
+        tiles = pool.sort(() => Math.random() - 0.5);
+
+        // Çizdir
+        tiles.forEach((t, i) => {
+          const div = document.createElement("div");
+          div.id = `tile-${i}`;
+          div.className =
+            "tile bg-slate-800 rounded-2xl flex items-center justify-center p-4 border border-slate-700/50 shadow-lg";
+          // Üslerin konumu için exponent-container kullanıldı
+          div.innerHTML = `
+                    <div class="exponent-container">
+                        <span class="base-text text-3xl font-bold">${t.b}</span>
+                        <span class="exp-text font-bold text-slate-500">${t.e}</span>
+                    </div>
+                `;
+          div.onclick = () => handleTileClick(i, div);
+          document.getElementById("grid").appendChild(div);
+        });
+      }
+
+      function handleTileClick(idx, el) {
+        if (isTransitioning) return;
+        if (audioCtx.state === "suspended") audioCtx.resume();
+
+        if (selectedIndices.includes(idx)) {
+          selectedIndices = selectedIndices.filter((i) => i !== idx);
+          el.classList.remove("selected", "bg-cyan-700", "bg-rose-700");
+          playSound(200, "sine", 0.1);
+        } else {
+          if (selectedIndices.length < 2) {
+            selectedIndices.push(idx);
+            const colorClass =
+              gameMode === "mul" ? "bg-cyan-700" : "bg-rose-700";
+            el.classList.add("selected", colorClass);
+            playSound(400 + selectedIndices.length * 100, "sine", 0.1);
+          }
+        }
+
+        updatePreview();
+      }
+
+      function updatePreview() {
+        const preview = document.getElementById("preview-content");
+        if (selectedIndices.length === 0) {
+          preview.innerText = "Başlamak için bir karo seçin...";
+          return;
+        }
+
+        const t1 = tiles[selectedIndices[0]];
+        const t2 =
+          selectedIndices.length > 1 ? tiles[selectedIndices[1]] : null;
+
+        if (!t2) {
+          preview.innerHTML = `${t1.b}<sup>${t1.e}</sup> ... ?`;
+          return;
+        }
+
+        const opSym = gameMode === "mul" ? "·" : "÷";
+        preview.innerHTML = `${t1.b}<sup>${t1.e}</sup> ${opSym} ${t2.b}<sup>${t2.e}</sup>`;
+
+        // Mantık Kontrolü
+        let resultExp = 0;
+        let isValidBase = t1.b === t2.b && t1.b === targetBase;
+
+        if (gameMode === "mul") {
+          resultExp = t1.e + t2.e;
+        } else {
+          // Bölmede her iki yönü de kontrol edelim
+          resultExp = Math.abs(t1.e - t2.e);
+        }
+
+        if (isValidBase && resultExp === targetExp) {
+          handleWin();
+        } else if (selectedIndices.length === 2) {
+          setTimeout(() => {
+            preview.innerHTML +=
+              " <span class='text-rose-500 ml-2'>= Hatalı!</span>";
+            playSound(150, "sawtooth", 0.3);
+          }, 100);
+        }
+      }
+
+      function handleWin() {
+        isTransitioning = true;
+        score += level * 100;
+        document.getElementById("score").innerText = score;
+
+        // Görsel efekt: Konteynırı parlat
+        document
+          .getElementById("main-container")
+          .classList.add("success-flash");
+
+        playSound(600, "square", 0.15);
+        setTimeout(() => playSound(800, "square", 0.2), 150);
+
+        // Kısa bir beklemeden sonra direkt yeni seviyeye geç
+        setTimeout(() => {
+          level++;
+          initLevel();
+        }, 800);
+      }
+
+      window.onload = initLevel;
+    </script>
+  </body>
+</html>

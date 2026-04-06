@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Üslü İfadeler Laboratuvarı - Tek Sayfa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+
+      body {
+        font-family: "JetBrains+Mono", monospace;
+        background-color: #0f172a;
+        color: #f8fafc;
+      }
+
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .microscope-view {
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        filter: blur(var(--blur-amount));
+        transform: scale(var(--scale-amount));
+      }
+
+      .exp-control {
+        transition: all 0.2s;
+        user-select: none;
+      }
+
+      .exp-control:active {
+        transform: scale(0.9);
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .success-glow {
+        animation: pulse-glow 2s infinite;
+      }
+
+      .no-scroll {
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Müzik Ekolayzır Animasyonu */
+      .eq-bar {
+        width: 3px;
+        background: #22d3ee;
+        margin: 0 1px;
+        animation: eq 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes eq {
+        from {
+          height: 4px;
+        }
+        to {
+          height: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body class="no-scroll flex flex-col items-center p-2 md:p-4">
+    <!-- Başlık Bölümü -->
+    <header
+      class="w-full max-w-2xl flex items-center justify-between mb-2 md:mb-4 px-4"
+    >
+      <div class="w-10"></div>
+      <div class="text-center">
+        <h1 class="text-2xl md:text-3xl font-bold text-cyan-400">
+          KUVVET LABORATUVARI
+        </h1>
+        <p
+          class="text-slate-400 text-[10px] md:text-xs uppercase tracking-widest"
+        >
+          Doğru kuvveti bularak örneği odakla!
+        </p>
+      </div>
+
+      <!-- Müzik Kontrolü -->
+      <button
+        id="music-toggle"
+        onclick="toggleMusic()"
+        class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-slate-700 transition-colors"
+      >
+        <div id="eq-container" class="flex items-end hidden">
+          <div class="eq-bar" style="animation-delay: 0.1s"></div>
+          <div class="eq-bar" style="animation-delay: 0.3s"></div>
+          <div class="eq-bar" style="animation-delay: 0.2s"></div>
+        </div>
+        <span id="music-off-icon" class="text-slate-500 text-lg">🔇</span>
+      </button>
+    </header>
+
+    <!-- Laboratuvar Arayüzü -->
+    <main
+      class="w-full max-w-6xl flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden mb-2"
+    >
+      <!-- Sol Panel: Gözlem Alanı -->
+      <div
+        class="glass-panel rounded-3xl p-4 flex flex-col items-center justify-center relative overflow-hidden"
+      >
+        <div
+          class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-500 via-transparent to-transparent"
+        ></div>
+
+        <div
+          id="target-image"
+          class="microscope-view text-7xl md:text-9xl mb-4 select-none"
+          style="--blur-amount: 15px; --scale-amount: 0.7"
+        >
+          🧪
+        </div>
+
+        <div class="text-center z-10 w-full">
+          <span
+            id="target-name"
+            class="text-xl md:text-2xl font-bold block text-cyan-300"
+            >Örnek</span
+          >
+          <div class="flex items-center justify-center space-x-2 mt-1">
+            <span class="text-slate-400 text-[10px] uppercase">Hedef:</span>
+            <span
+              id="target-value-display"
+              class="text-lg md:text-xl font-bold text-white bg-slate-900 px-3 py-0.5 rounded-lg border border-slate-700"
+              >0</span
+            >
+          </div>
+        </div>
+
+        <div
+          id="focus-indicator"
+          class="mt-4 flex items-center space-x-2 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-800 border border-slate-700"
+        >
+          <div id="status-led" class="w-2 h-2 rounded-full bg-red-500"></div>
+          <span id="status-text" class="text-slate-400">ANALİZ BEKLENİYOR</span>
+        </div>
+      </div>
+
+      <!-- Sağ Panel: Kontrol Paneli -->
+      <div
+        class="glass-panel rounded-3xl p-4 flex flex-col justify-between overflow-hidden"
+      >
+        <div class="space-y-6">
+          <!-- Sabit Taban -->
+          <div class="text-center">
+            <label
+              class="text-[10px] text-slate-500 font-bold mb-1 block uppercase tracking-widest italic"
+              >SABİT TABAN (a)</label
+            >
+            <div
+              class="inline-block bg-slate-900/50 px-6 py-2 rounded-xl border border-slate-800"
+            >
+              <div
+                id="current-base"
+                class="text-4xl md:text-5xl font-bold text-cyan-500 opacity-40"
+              >
+                2
+              </div>
+            </div>
+          </div>
+
+          <!-- Üs Kontrolü -->
+          <div class="text-center">
+            <label
+              class="text-[10px] text-yellow-500 font-bold mb-2 block uppercase tracking-widest"
+              >ÜS AYARI (n)</label
+            >
+            <div class="flex items-center justify-center space-x-6">
+              <button
+                onclick="updateValue(-1)"
+                class="exp-control bg-slate-800 hover:bg-slate-700 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-2xl font-bold border border-slate-600 shadow-lg"
+              >
+                -
+              </button>
+              <div
+                id="current-exp"
+                class="text-5xl md:text-6xl font-bold text-white w-20"
+              >
+                1
+              </div>
+              <button
+                onclick="updateValue(1)"
+                class="exp-control bg-slate-800 hover:bg-slate-700 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-2xl font-bold border border-slate-600 shadow-lg"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Eşitlik Önizleme -->
+          <div
+            class="bg-slate-900/80 p-4 rounded-2xl border-2 border-dashed border-slate-700 text-center"
+          >
+            <div class="flex items-center justify-center space-x-2">
+              <div class="flex items-start">
+                <span
+                  id="preview-base"
+                  class="text-3xl font-bold text-slate-400"
+                  >2</span
+                >
+                <span
+                  id="preview-exp"
+                  class="text-xl font-bold text-yellow-400 -mt-2 ml-0.5"
+                  >1</span
+                >
+              </div>
+              <span class="text-2xl text-slate-600">=</span>
+              <span
+                id="preview-result"
+                class="text-3xl font-bold text-emerald-400"
+                >2</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Alt Buton ve Bilgiler -->
+        <div class="mt-4">
+          <button
+            id="submit-btn"
+            onclick="checkAnswer()"
+            class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 active:scale-95"
+          >
+            <span>VERİYİ ONAYLA</span>
+          </button>
+
+          <div class="mt-4 flex justify-between items-center text-xs">
+            <div
+              class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700"
+            >
+              <span class="text-slate-500 text-[8px] block uppercase"
+                >Puan</span
+              >
+              <span id="score" class="text-cyan-400 font-bold">0</span>
+            </div>
+            <div
+              class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-right"
+            >
+              <span class="text-slate-500 text-[8px] block uppercase"
+                >İlerleme</span
+              >
+              <span id="level-display" class="text-white font-bold"
+                >1 / 10</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal Mesaj Penceresi -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4"
+    >
+      <div
+        class="bg-slate-800 border-2 border-cyan-500 rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl"
+      >
+        <div id="modal-icon" class="text-6xl mb-4">🧪</div>
+        <h2 id="modal-title" class="text-2xl font-bold mb-2 text-white">
+          Harika!
+        </h2>
+        <p id="modal-text" class="text-sm text-slate-400 mb-6 italic">
+          Veriler mükemmel eşleşti.
+        </p>
+        <button
+          onclick="nextLevel()"
+          id="modal-btn"
+          class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-xl font-bold w-full transition-all"
+        >
+          SIRADAKİ GÖREV
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Ses Mantığı
+      let audioCtx = null;
+      let ambientOsc = null;
+      let ambientGain = null;
+      let lfo = null;
+      let lfoGain = null;
+      let isMusicPlaying = false;
+
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      function playSound(freq, type, duration, vol) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioCtx.currentTime + duration,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      function playInteractionSound() {
+        playSound(440, "sine", 0.1, 0.05);
+      }
+
+      function playSuccessSound() {
+        const now = audioCtx.currentTime;
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.setValueAtTime(f, now + i * 0.1);
+          gain.gain.setValueAtTime(0.1, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.5);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.5);
+        });
+      }
+
+      function playErrorSound() {
+        playSound(110, "sawtooth", 0.4, 0.1);
+      }
+
+      function toggleMusic() {
+        initAudio();
+        const eq = document.getElementById("eq-container");
+        const offIcon = document.getElementById("music-off-icon");
+
+        if (!isMusicPlaying) {
+          // Ortam Müziğini Başlat
+          ambientOsc = audioCtx.createOscillator();
+          ambientGain = audioCtx.createGain();
+          ambientOsc.type = "sine";
+          ambientOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
+
+          // FM modülasyonu (LFO)
+          lfo = audioCtx.createOscillator();
+          lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime);
+          lfoGain = audioCtx.createGain();
+          lfoGain.gain.setValueAtTime(5, audioCtx.currentTime);
+          lfo.connect(lfoGain);
+          lfoGain.connect(ambientOsc.frequency);
+          lfo.start();
+
+          ambientGain.gain.setValueAtTime(0, audioCtx.currentTime);
+          ambientGain.gain.linearRampToValueAtTime(
+            0.05,
+            audioCtx.currentTime + 2,
+          );
+
+          ambientOsc.connect(ambientGain);
+          ambientGain.connect(audioCtx.destination);
+          ambientOsc.start();
+
+          eq.classList.remove("hidden");
+          offIcon.classList.add("hidden");
+          isMusicPlaying = true;
+        } else {
+          // Müziği Durdur
+          if (ambientGain) {
+            ambientGain.gain.linearRampToValueAtTime(
+              0,
+              audioCtx.currentTime + 0.5,
+            );
+          }
+          setTimeout(() => {
+            if (ambientOsc) {
+              ambientOsc.stop();
+              ambientOsc = null;
+            }
+            if (lfo) {
+              lfo.stop();
+              lfo = null;
+            }
+          }, 500);
+          eq.classList.add("hidden");
+          offIcon.classList.remove("hidden");
+          isMusicPlaying = false;
+        }
+      }
+
+      // Oyun Mantığı
+      const samples = [
+        { name: "Siyah Delik", base: 5, val: 125, icon: "🕳️" },
+        { name: "Altın Parçacığı", base: 3, val: 81, icon: "✨" },
+        { name: "Negatif Enerji", base: -2, val: 16, icon: "⚛️" },
+        { name: "Mikro Hücre", base: 2, val: 0.25, icon: "🧫" },
+        { name: "Kuantum Bit", base: 2, val: 0.125, icon: "💾" },
+        { name: "Dev Yıldız", base: 2, val: 1024, icon: "🔆" },
+        { name: "Buzul Kristali", base: 5, val: 0.04, icon: "❄️" },
+        { name: "Gölge Madde", base: -3, val: -27, icon: "🌑" },
+        { name: "Lazer Işını", base: 17, val: 1, icon: "🔦" },
+        { name: "Nötron Yıldızı", base: 5, val: 625, icon: "🌌" },
+      ];
+
+      let currentLevel = 0;
+      let score = 0;
+      let base = 2;
+      let exp = 1;
+      let targetValue = 0;
+
+      function updateUI() {
+        document.getElementById("current-base").innerText = base;
+        document.getElementById("current-exp").innerText = exp;
+        document.getElementById("preview-base").innerText =
+          base < 0 ? `(${base})` : base;
+        document.getElementById("preview-exp").innerText = exp;
+
+        const result = Math.pow(base, exp);
+        document.getElementById("preview-result").innerText =
+          formatValue(result);
+
+        const diff = Math.abs(result - targetValue);
+        if (diff < 0.000001) {
+          setFocus(0, true);
+        } else if (diff < targetValue * 0.8 && diff > 0) {
+          setFocus(5, false);
+        } else {
+          setFocus(12, false);
+        }
+      }
+
+      function formatValue(v) {
+        if (Number.isInteger(v)) return v.toLocaleString("tr-TR");
+        return v.toFixed(4).replace(/\.?0+$/, "");
+      }
+
+      function setFocus(blur, focused) {
+        const img = document.getElementById("target-image");
+        img.style.setProperty("--blur-amount", `${blur}px`);
+        img.style.setProperty("--scale-amount", focused ? "1.1" : "0.8");
+
+        const led = document.getElementById("status-led");
+        const text = document.getElementById("status-text");
+
+        if (focused) {
+          led.className =
+            "w-2 h-2 rounded-full bg-emerald-500 success-glow shadow-[0_0_8px_#10b981]";
+          text.innerText = "ODAKLANDI";
+          text.className = "text-emerald-400";
+        } else {
+          led.className =
+            "w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]";
+          text.innerText = blur < 10 ? "YAKLAŞILIYOR" : "ANALİZ BEKLENİYOR";
+          text.className = "text-slate-500";
+        }
+      }
+
+      function updateValue(change) {
+        initAudio();
+        playInteractionSound();
+        exp += change;
+        if (exp > 12) exp = 12;
+        if (exp < -12) exp = -12;
+        updateUI();
+      }
+
+      function initLevel() {
+        const sample = samples[currentLevel];
+        targetValue = sample.val;
+        base = sample.base;
+
+        document.getElementById("target-name").innerText = sample.name;
+        document.getElementById("target-image").innerText = sample.icon;
+        document.getElementById("target-value-display").innerText =
+          formatValue(targetValue);
+        document.getElementById("level-display").innerText =
+          `${currentLevel + 1} / ${samples.length}`;
+
+        exp = 1;
+        updateUI();
+      }
+
+      function checkAnswer() {
+        initAudio();
+        const result = Math.pow(base, exp);
+        const isCorrect = Math.abs(result - targetValue) < 0.000001;
+
+        if (isCorrect) {
+          playSuccessSound();
+          score += 25 * (currentLevel + 1);
+          document.getElementById("score").innerText = score;
+        } else {
+          playErrorSound();
+        }
+        showModal(isCorrect);
+      }
+
+      function showModal(success) {
+        const modal = document.getElementById("modal");
+        const title = document.getElementById("modal-title");
+        const text = document.getElementById("modal-text");
+        const icon = document.getElementById("modal-icon");
+        const btn = document.getElementById("modal-btn");
+
+        modal.classList.remove("hidden");
+
+        if (success) {
+          icon.innerText = "⚡";
+          title.innerText = "BAŞARILI!";
+          text.innerText = `${base} sayısının ${exp}. kuvveti hedefe eşit. Deney başarılı!`;
+          btn.innerText =
+            currentLevel === samples.length - 1
+              ? "OYUNU BİTİR"
+              : "SIRADAKİ GÖREV";
+        } else {
+          icon.innerText = "⚠️";
+          title.innerText = "HATALI VERİ";
+          text.innerText = `Sonuç eşleşmedi. Taban ve kuvvet arasındaki ilişkiyi tekrar kontrol et.`;
+          btn.innerText = "TEKRAR DENE";
+        }
+      }
+
+      function nextLevel() {
+        const modal = document.getElementById("modal");
+        const result = Math.pow(base, exp);
+
+        if (Math.abs(result - targetValue) < 0.000001) {
+          currentLevel++;
+          if (currentLevel >= samples.length) {
+            alert(
+              "Tebrikler! Üslü İfade Uzmanı Sertifikası Kazandın! Puan: " +
+                score,
+            );
+            currentLevel = 0;
+            score = 0;
+            document.getElementById("score").innerText = "0";
+          }
+          initLevel();
+        }
+        modal.classList.add("hidden");
+      }
+
+      window.onload = initLevel;
+    </script>
+  </body>
+</html>

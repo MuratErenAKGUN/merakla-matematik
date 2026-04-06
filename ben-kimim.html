@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ben Kimim | Merakla Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;700&display=swap");
+      :root {
+        --dark-green: #0a4a34;
+        --mustard-yellow: #f4b41a;
+        --off-white: #ffffff;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        scroll-behavior: smooth;
+        background-color: var(--off-white);
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .playfair {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* ANA SAYFADAKİ YEŞİL HOVER EFEKTİ */
+      .nav-link {
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-size: 15px !important;
+        white-space: nowrap;
+        color: var(--dark-green);
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 3px;
+        bottom: -5px;
+        left: 0;
+        background-color: var(--dark-green);
+        transition: width 0.3s ease;
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      .profile-image-container {
+        position: relative;
+      }
+      .profile-image-container::before {
+        content: "";
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: 20px;
+        bottom: 20px;
+        border: 4px solid var(--mustard-yellow);
+        border-radius: 1.5rem;
+        z-index: 0;
+      }
+
+      /* ANİMASYON STİLLERİ */
+      .reveal {
+        opacity: 0;
+        transition: all 1.2s ease-out;
+      }
+      .reveal-left {
+        transform: translateX(-100px);
+      }
+      .reveal-right {
+        transform: translateX(100px);
+      }
+      .reveal-visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    </style>
+  </head>
+  <body class="text-gray-900">
+    <nav
+      class="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b-2 border-[#0a4a34]/10 z-50"
+    >
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center h-32 lg:h-40">
+          <a href="merakla.html" class="flex-shrink-0">
+            <img
+              src="MERAKLA%20MATEMATIK.jpg"
+              alt="Logo"
+              class="h-28 lg:h-36 w-auto object-contain transition-transform hover:scale-105"
+            />
+          </a>
+
+          <div class="flex-1 flex justify-center">
+            <div
+              class="hidden lg:flex gap-10 items-center text-[#0a4a34] font-bold uppercase tracking-wider"
+            >
+              <a href="ben-kimim.html" class="nav-link">Ben Kimim</a>
+              <a href="oyunlar.html" class="nav-link">Oyunlarımız</a>
+              <a href="cikmis-sorular.html" class="nav-link">Çıkmış Sorular</a>
+              <a href="ders-notlari.html" class="nav-link">Dersler & Notlar</a>
+              <a href="pomodoro.html" class="nav-link flex items-center gap-2">
+                <i class="fas fa-stopwatch text-[#f4b41a]"></i> Pomodoro
+              </a>
+            </div>
+          </div>
+
+          <div class="hidden lg:block lg:w-[150px]"></div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto pt-64 pb-32 px-4 overflow-hidden">
+      <div class="flex flex-col md:flex-row items-center gap-16 lg:gap-24">
+        <div
+          class="w-full md:w-5/12 profile-image-container reveal reveal-left"
+          id="profile-reveal"
+        >
+          <div
+            class="relative z-10 rounded-3xl overflow-hidden shadow-2xl aspect-[3/4] border-4 border-white bg-gray-100"
+          >
+            <img
+              src="LGS%20MATEMAT%C4%B0K%20%C3%87IKMISLAR.png"
+              alt="Murat Eren Akgün"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+        <div class="w-full md:w-7/12 reveal reveal-right" id="text-reveal">
+          <span
+            class="text-[#f4b41a] font-bold uppercase tracking-[0.3em] text-sm"
+            >Ben Kimim ?</span
+          >
+          <h2
+            class="text-5xl lg:text-6xl font-bold text-[#0a4a34] mt-4 mb-2 playfair italic"
+          >
+            Murat Eren Akgün
+          </h2>
+          <h3
+            class="text-xl text-gray-400 font-medium mb-8 uppercase tracking-widest font-bold"
+          >
+            GTÜ Matematik Bölümü öğrencisi
+          </h3>
+
+          <div
+            class="space-y-6 text-gray-700 leading-relaxed text-lg text-justify"
+          >
+            <p>
+              Merhaba, ben Murat Eren Akgün. Gebze Teknik Üniversitesi Matematik
+              Bölümü öğrencisiyim. 2022 yılından beri matematik özel dersleri
+              veriyorum. Merakla Matematik sitesini de öğrencilerime yardımcı
+              olması amacıyla kurdum. Kişiselleştirilmiş bir eğitim süreci ve
+              birebir rehberlik için Instagram üzerinden DM yoluyla benimle
+              iletişime geçebilir, özel ders planlamalarınızı hemen
+              başlatabilirsiniz.
+            </p>
+            <p>
+              Platformumuzun en güçlü yönlerinden biri olan Oyunlar sekmesinde,
+              geleneksel yöntemlerin dışına çıkıyoruz. Soyut matematiksel
+              kavramları oyunlaştırarak öğrencilere çok daha interaktif ve
+              eğlenceli bir eğitim modeli sunuyoruz. Burada matematik bir yük
+              olmaktan çıkıyor, stratejik bir keşif sürecine dönüşüyor.
+            </p>
+          </div>
+
+          <div class="mt-12 pt-8 border-t border-gray-100">
+            <img
+              src="imza.jpeg"
+              alt="İmza"
+              class="h-20 w-auto opacity-90 transition-opacity hover:opacity-100"
+            />
+          </div>
+
+          <div class="mt-16 reveal reveal-right" id="button-reveal">
+            <a
+              href="merakla.html"
+              class="inline-flex items-center gap-3 px-10 py-4 border-2 border-[#0a4a34] text-[#0a4a34] rounded-full font-bold hover:bg-[#0a4a34] hover:text-white transition-all shadow-md group"
+            >
+              <i
+                class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"
+              ></i>
+              Ana Sayfaya Dön
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bg-[#0a4a34] text-white/40 py-12 text-center">
+      <p class="text-xs tracking-[0.3em] uppercase">
+        © 2026 MERAKLA MATEMATİK | MURAT EREN AKGÜN
+      </p>
+    </footer>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+          document
+            .getElementById("profile-reveal")
+            .classList.add("reveal-visible");
+        }, 100);
+
+        setTimeout(() => {
+          document
+            .getElementById("text-reveal")
+            .classList.add("reveal-visible");
+        }, 300);
+
+        setTimeout(() => {
+          document
+            .getElementById("button-reveal")
+            .classList.add("reveal-visible");
+        }, 800);
+      });
+    </script>
+  </body>
+</html>

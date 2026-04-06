@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oyunlar | Merakla Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap");
+
+      :root {
+        --bg-dark: #0f111a;
+        --card-bg: #1a1d29;
+        --neon-green: #00ff9d;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-dark);
+        color: white;
+        scroll-behavior: smooth;
+      }
+
+      /* Üst Menü Tasarımı - Ana Sayfa ile Uyumlu */
+      .custom-nav {
+        background: rgba(15, 17, 26, 0.98);
+        backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-link {
+        position: relative;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 15px;
+        font-weight: 700;
+        transition: all 0.3s;
+        padding: 10px 0;
+      }
+
+      /* FOSFORLU YEŞİL HOVER EFEKTİ */
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 3px;
+        left: 0;
+        bottom: 0;
+        background-color: var(--neon-green);
+        box-shadow:
+          0 0 15px var(--neon-green),
+          0 0 5px var(--neon-green);
+        transition: width 0.3s ease;
+      }
+      .nav-link:hover::after {
+        width: 100%;
+      }
+      .nav-link:hover {
+        color: var(--neon-green);
+      }
+
+      /* Ünite Başlığı Altındaki Eski Çizgi Tasarımı */
+      .unit-title-divider {
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        margin: 15px auto 35px;
+        width: 250px;
+        opacity: 0.6;
+      }
+
+      /* Oyun Kartları */
+      .game-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+      }
+      .game-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 255, 157, 0.15);
+      }
+
+      .theme-green {
+        --accent: var(--neon-green);
+      }
+      .theme-yellow {
+        --accent: #f4b41a;
+      }
+      .theme-red {
+        --accent: #ff4d4d;
+      }
+
+      .game-card:hover {
+        border-color: var(--accent);
+      }
+      .play-btn {
+        color: var(--accent);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .play-btn:hover {
+        background: var(--accent);
+        color: var(--bg-dark);
+        box-shadow: 0 0 20px var(--accent);
+      }
+
+      .blur-games {
+        filter: blur(6px);
+        pointer-events: none;
+        opacity: 0.4;
+      }
+      .yakinda-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: black;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-weight: 800;
+        font-size: 12px;
+        text-transform: uppercase;
+        z-index: 20;
+      }
+
+      /* Sosyal Medya */
+      .floating-social {
+        position: fixed;
+        right: 25px;
+        bottom: 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 100;
+      }
+      .social-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+      .social-circle:hover {
+        transform: scale(1.1);
+      }
+      .insta-color {
+        background: linear-gradient(
+          45deg,
+          #f09433,
+          #e6683c,
+          #dc2743,
+          #cc2366,
+          #bc1888
+        );
+      }
+      .yt-color {
+        background: #ff0000;
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sosyal Medya Yönlendirme -->
+    <div class="floating-social">
+      <a
+        href="https://www.youtube.com/@MeraklaMatematik"
+        target="_blank"
+        class="social-circle yt-color"
+        title="YouTube Kanalımız"
+      >
+        <i class="fab fa-youtube text-xl"></i>
+      </a>
+      <a
+        href="https://www.instagram.com/meraklamatematik/"
+        target="_blank"
+        class="social-circle insta-color"
+        title="Instagram Sayfamız"
+      >
+        <i class="fab fa-instagram text-xl"></i>
+      </a>
+    </div>
+
+    <!-- Navigasyon -->
+    <nav class="fixed top-0 w-full z-50 custom-nav">
+      <div
+        class="max-w-7xl mx-auto px-6 h-32 lg:h-40 flex items-center justify-between"
+      >
+        <div class="flex-shrink-0">
+          <a href="merakla.html">
+            <img
+              src="MERAKLA%20MATEMATIK%20game.png"
+              alt="Logo"
+              class="h-24 lg:h-32 w-auto object-contain transition-transform hover:scale-105"
+            />
+          </a>
+        </div>
+
+        <div
+          class="flex flex-1 justify-center px-4 overflow-x-auto no-scrollbar"
+        >
+          <div class="flex items-center space-x-6 lg:space-x-10">
+            <a href="ben-kimim.html" class="nav-link uppercase">Ben Kimim</a>
+            <a href="oyunlar.html" class="nav-link uppercase">Oyunlarımız</a>
+            <a href="cikmis-sorular.html" class="nav-link uppercase"
+              >Çıkmış Sorular</a
+            >
+            <a href="ders-notlari.html" class="nav-link uppercase"
+              >Dersler & Notlar</a
+            >
+            <a
+              href="pomodoro.html"
+              class="nav-link uppercase flex items-center gap-2"
+            >
+              <span class="text-yellow-500 text-[8px]">●</span> Pomodoro
+            </a>
+          </div>
+        </div>
+        <div class="hidden lg:block w-20"></div>
+      </div>
+    </nav>
+
+    <main class="pt-56 pb-20 max-w-7xl mx-auto px-6">
+      <div class="mb-20 text-center">
+        <h1 class="text-5xl font-bold tracking-tight">LGS Matematik Dünyası</h1>
+        <p
+          class="text-gray-500 mt-4 uppercase tracking-[0.3em] text-xs font-bold"
+        >
+          Öğrenmenin En Eğlenceli Yolu
+        </p>
+      </div>
+      <div id="game-container"></div>
+    </main>
+
+    <script>
+      const themes = ["theme-green", "theme-yellow", "theme-red"];
+      const lgsUnits = [
+        {
+          name: "Çarpanlar ve Katlar",
+          active: true,
+          games: [
+            {
+              n: "Çarpan Yağmuru",
+              d: "Gökten düşen sayılar arasından doğru çarpanları topla.",
+              u: "çarpan yağmuru2.html",
+            },
+            {
+              n: "Asal mı Değil mi?",
+              d: "Hızla karar ver: Sayı asal mı yoksa bileşik mi?",
+              u: "asalmıdeğilmi.html",
+            },
+            {
+              n: "EBOB-EKOK Yarışı",
+              d: "Zamana karşı yarışarak ortak bölen ve katları bul.",
+              u: "ebobekok1.html",
+            },
+          ],
+        },
+        {
+          name: "Üslü İfadeler",
+          active: true,
+          games: [
+            {
+              n: "Üs Birleştirici",
+              d: "İşlem kurallarıyla üsleri birleştir.",
+              u: "2. ünite 1. oyun.html",
+            },
+            {
+              n: "Kuvvet Laboratuvarı",
+              d: "Doğru kuvveti bul, odağı yakala.",
+              u: "2.ünite 2. oyun.html",
+            },
+            {
+              n: "Üslü Kule Tırmanışı",
+              d: "Doğru basamağa zıpla, zirveye çık.",
+              u: "2. ünite 3.oyun.html",
+            },
+          ],
+        },
+        {
+          name: "Kareköklü İfadeler",
+          active: true,
+          games: [
+            {
+              n: "Kökten Kurtuluş",
+              d: "Sayıları kök dışına çıkararak hedefe ulaş.",
+              u: "3.ünite 1. oyun.html",
+            },
+            {
+              n: "Kökten Geçiş",
+              d: "Yaklaşık değerleri tahmin et, engelleri aş.",
+              u: "3.ünite 2.oyun.html",
+            },
+            {
+              n: "Kök Tahmin Ustası",
+              d: "Uzay aracınla doğru meteorları avla ve tahmin et.",
+              u: "3.ünite3.oyun.html",
+            },
+          ],
+        },
+        { name: "Veri Analizi", active: false },
+        { name: "Basit Olayların Olasılığı", active: false },
+        { name: "Cebirsel İfadeler", active: false },
+        { name: "Doğrusal Denklemler", active: false },
+        { name: "Eşitsizlikler", active: false },
+        { name: "Üçgenler", active: false },
+        { name: "Eşlik ve Benzerlik", active: false },
+        { name: "Dönüşüm Geometrisi", active: false },
+        { name: "Geometrik Cisimler", active: false },
+      ];
+
+      const container = document.getElementById("game-container");
+
+      container.innerHTML = lgsUnits
+        .map((unit, index) => {
+          const themeClass = themes[index % 3];
+          return `
+          <section class="mb-24 ${themeClass}">
+            <div class="text-center mb-10">
+              <h3 class="text-2xl font-bold uppercase tracking-widest text-white opacity-90">${unit.name}</h3>
+              <div class="unit-title-divider"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+              ${!unit.active ? '<div class="yakinda-overlay">YAKINDA</div>' : ""}
+              ${(unit.active ? unit.games : [1, 2, 3])
+                .map(
+                  (g) => `
+                <div class="game-card p-8 ${!unit.active ? "blur-games" : ""}">
+                  <div class="text-[10px] font-bold uppercase tracking-[0.2em] mb-4 opacity-50">LGS MATEMATİK</div>
+                  <h4 class="text-xl font-bold mb-2">${unit.active ? g.n : "Kilidini Aç"}</h4>
+                  <p class="text-sm text-gray-500 mb-8">${unit.active ? g.d : "Bu ünite üzerindeki çalışmalarımız devam ediyor."}</p>
+                  <div class="flex justify-between items-center">
+                    <i class="fas fa-gamepad opacity-20 text-2xl"></i>
+                    <a href="${unit.active ? g.u : "#"}" class="play-btn px-6 py-2 rounded-lg font-bold transition-all text-center">Oyna →</a>
+                  </div>
+                </div>
+              `,
+                )
+                .join("")}
+            </div>
+          </section>
+        `;
+        })
+        .join("");
+    </script>
+  </body>
+</html>

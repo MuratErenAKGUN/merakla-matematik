@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Asal mı Değil mi? - LGS Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@400;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #020617;
+        font-family: "Inter", sans-serif;
+        touch-action: none;
+        color: white;
+      }
+      .orbitron {
+        font-family: "Orbitron", sans-serif;
+      }
+
+      /* Kart Animasyonları */
+      .card-container {
+        perspective: 1000px;
+      }
+      #number-card {
+        transition:
+          transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          opacity 0.2s;
+        cursor: grab;
+      }
+      #number-card:active {
+        cursor: grabbing;
+      }
+
+      /* Arka Plan Efekti */
+      .bg-grid {
+        background-image:
+          linear-gradient(to right, #1e293b 1px, transparent 1px),
+          linear-gradient(to bottom, #1e293b 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: radial-gradient(circle at center, black, transparent 80%);
+      }
+
+      /* Geri Bildirim Flaşları */
+      .flash-correct {
+        background: rgba(34, 197, 94, 0.2);
+        animation: flash 0.4s;
+      }
+      .flash-wrong {
+        background: rgba(239, 68, 68, 0.2);
+        animation: flash 0.4s;
+      }
+      @keyframes flash {
+        0% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* Timer Bar Animasyonu */
+      #timer-bar {
+        transition: width 0.1s linear;
+      }
+
+      .shake {
+        animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translate3d(-1px, 0, 0);
+        }
+        20%,
+        80% {
+          transform: translate3d(2px, 0, 0);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-4px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(4px, 0, 0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="feedback-flash"
+      class="fixed inset-0 pointer-events-none z-40 opacity-0"
+    ></div>
+    <div class="fixed inset-0 bg-grid pointer-events-none"></div>
+
+    <!-- UI Üst Kısım -->
+    <div
+      class="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-30"
+    >
+      <div
+        class="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-700 shadow-xl"
+      >
+        <div
+          class="text-[10px] uppercase tracking-widest text-slate-400 font-bold"
+        >
+          PUAN
+        </div>
+        <div id="score" class="text-3xl font-black text-blue-400 orbitron">
+          0
+        </div>
+      </div>
+
+      <div class="flex flex-col items-end flex-1 max-w-[200px] mx-4">
+        <div
+          id="timer-container"
+          class="w-full h-3 bg-slate-800 rounded-full border border-slate-700 overflow-hidden shadow-inner"
+        >
+          <div
+            id="timer-bar"
+            class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 w-full"
+          ></div>
+        </div>
+        <div
+          id="timer-val"
+          class="text-[14px] mt-1 text-cyan-400 font-black orbitron tracking-wider text-right uppercase"
+        >
+          20.0s
+        </div>
+      </div>
+
+      <div
+        class="bg-slate-900/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-700 shadow-xl text-right"
+      >
+        <div
+          class="text-[10px] uppercase tracking-widest text-slate-400 font-bold"
+        >
+          REKOR
+        </div>
+        <div
+          id="high-score"
+          class="text-3xl font-black text-yellow-500 orbitron"
+        >
+          0
+        </div>
+      </div>
+    </div>
+
+    <!-- Ana Oyun Alanı -->
+    <main
+      class="relative h-screen flex flex-col items-center justify-center p-4"
+    >
+      <!-- Yönlendirme İpuçları -->
+      <div
+        class="absolute inset-y-0 left-0 w-24 flex items-center justify-center opacity-20 pointer-events-none"
+      >
+        <div
+          class="rotate-[-90deg] whitespace-nowrap text-red-500 font-black text-2xl tracking-[0.5em] uppercase"
+        >
+          &larr; ASAL DEĞİL
+        </div>
+      </div>
+      <div
+        class="absolute inset-y-0 right-0 w-24 flex items-center justify-center opacity-20 pointer-events-none"
+      >
+        <div
+          class="rotate-[90deg] whitespace-nowrap text-green-500 font-black text-2xl tracking-[0.5em] uppercase"
+        >
+          ASAL &rarr;
+        </div>
+      </div>
+
+      <!-- Kart -->
+      <div
+        class="card-container w-full max-w-sm aspect-[3/4] flex items-center justify-center"
+      >
+        <div
+          id="number-card"
+          class="relative w-72 h-96 bg-slate-800 rounded-[2.5rem] border-4 border-slate-700 shadow-2xl flex items-center justify-center flex-col select-none"
+        >
+          <div
+            class="absolute top-8 left-8 text-slate-600 font-black text-xl orbitron uppercase"
+          >
+            ASAL MI?
+          </div>
+          <div
+            id="current-number"
+            class="text-8xl font-black orbitron text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+          >
+            17
+          </div>
+          <div
+            class="absolute bottom-8 right-8 text-slate-600 font-black text-xl orbitron opacity-20 uppercase"
+          >
+            #MATEMATİK
+          </div>
+        </div>
+      </div>
+
+      <!-- Kontrol Butonları -->
+      <div class="mt-12 flex gap-8 z-30">
+        <button
+          onclick="handleChoice(false)"
+          class="w-20 h-20 rounded-full bg-red-500/10 border-4 border-red-500 flex items-center justify-center transition-transform active:scale-90 shadow-[0_0_20px_rgba(239,68,68,0.3)]"
+        >
+          <span class="text-3xl">❌</span>
+        </button>
+        <button
+          onclick="handleChoice(true)"
+          class="w-20 h-20 rounded-full bg-green-500/10 border-4 border-green-500 flex items-center justify-center transition-transform active:scale-90 shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+        >
+          <span class="text-3xl">✅</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Overlay Ekranlar -->
+    <div
+      id="overlay"
+      class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center text-center p-6 backdrop-blur-xl"
+    >
+      <div id="start-screen">
+        <h1
+          class="text-5xl font-black mb-4 orbitron bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-indigo-500 leading-tight"
+        >
+          ASAL MI DEĞİL Mİ?
+        </h1>
+        <div class="space-y-4 mb-10 text-slate-400">
+          <p>
+            Ekranda çıkan sayı
+            <span class="text-green-400 font-bold">ASAL</span> ise sağa kaydır
+            veya ✅'ya bas.
+          </p>
+          <p>
+            <span class="text-red-400 font-bold">ASAL DEĞİL</span> ise sola
+            kaydır veya ❌'ya bas.
+          </p>
+          <p class="text-sm italic">
+            Dikkat: 91, 111, 143 gibi sayılar seni yanıltabilir!
+          </p>
+        </div>
+        <button
+          onclick="startGame()"
+          class="px-12 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black text-2xl shadow-[0_8px_0_rgb(29,78,216)] transition-all transform hover:-translate-y-1 active:translate-y-1"
+        >
+          OYUNU BAŞLAT
+        </button>
+      </div>
+
+      <div id="game-over-screen" class="hidden">
+        <div class="text-8xl mb-4 text-red-500">⌛</div>
+        <h1 class="text-5xl font-black mb-2 text-red-500 orbitron">
+          ZAMAN DOLDU!
+        </h1>
+        <p class="text-2xl text-slate-400 mb-8">
+          Elde ettiğin puan:
+          <span id="final-score" class="text-white font-bold">0</span>
+        </p>
+        <button
+          onclick="startGame()"
+          class="px-12 py-4 bg-green-600 hover:bg-green-500 rounded-2xl font-black text-2xl shadow-[0_8px_0_rgb(21,128,61)] transition-all transform hover:-translate-y-1 active:translate-y-1"
+        >
+          YENİDEN DENE
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // --- SES SİSTEMİ ---
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      function playBeep(freq, type, duration) {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioCtx.currentTime + duration,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      const sounds = {
+        correct: () => playBeep(880, "sine", 0.2),
+        wrong: () => {
+          playBeep(150, "sawtooth", 0.3);
+          playBeep(100, "sawtooth", 0.3);
+        },
+        tick: () => playBeep(440, "sine", 0.05),
+        start: () => {
+          [523, 659, 783, 1046].forEach((f, i) =>
+            setTimeout(() => playBeep(f, "sine", 0.3), i * 100),
+          );
+        },
+      };
+
+      // --- OYUN DEĞİŞKENLERİ ---
+      let score = 0;
+      let highScore = localStorage.getItem("primeGameHighScore") || 0;
+      let timeLeft = 100; // 100 birim = 20 saniye başlangıç
+      let gameActive = false;
+      let currentNumber = 0;
+      let timerInterval;
+
+      const card = document.getElementById("number-card");
+      const numberDisplay = document.getElementById("current-number");
+      const scoreDisplay = document.getElementById("score");
+      const highScoreDisplay = document.getElementById("high-score");
+      const timerBar = document.getElementById("timer-bar");
+      const timerVal = document.getElementById("timer-val");
+      const feedbackFlash = document.getElementById("feedback-flash");
+
+      highScoreDisplay.innerText = highScore;
+
+      function isPrime(num) {
+        if (num <= 1) return false;
+        if (num <= 3) return true;
+        if (num % 2 === 0 || num % 3 === 0) return false;
+        for (let i = 5; i * i <= num; i += 6) {
+          if (num % i === 0 || num % (i + 2) === 0) return false;
+        }
+        return true;
+      }
+
+      function generateNumber() {
+        const max = Math.min(500, 50 + score * 5);
+        let num;
+
+        if (Math.random() > 0.5) {
+          do {
+            num = Math.floor(Math.random() * (max - 2)) + 2;
+          } while (!isPrime(num));
+        } else {
+          const traps = [91, 111, 117, 119, 121, 133, 143, 161, 221];
+          if (score > 10 && Math.random() > 0.7) {
+            num = traps[Math.floor(Math.random() * traps.length)];
+          } else {
+            do {
+              num = Math.floor(Math.random() * (max - 2)) + 2;
+            } while (isPrime(num));
+          }
+        }
+
+        currentNumber = num;
+        numberDisplay.innerText = num;
+
+        card.style.transition =
+          "transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s";
+        card.style.transform = "translate(0,0) rotate(0) scale(1)";
+        card.style.opacity = "1";
+      }
+
+      function startGame() {
+        score = 0;
+        timeLeft = 100;
+        gameActive = true;
+        scoreDisplay.innerText = "0";
+        timerVal.innerText = "20.0s";
+        document.getElementById("overlay").classList.add("hidden");
+        document.getElementById("game-over-screen").classList.add("hidden");
+        document.getElementById("start-screen").classList.add("hidden");
+
+        sounds.start();
+        generateNumber();
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 100);
+      }
+
+      function updateTimer() {
+        if (!gameActive) return;
+        const decay = 0.5 + score * 0.02;
+        timeLeft -= decay;
+        if (timeLeft < 0) timeLeft = 0;
+
+        timerBar.style.width = timeLeft + "%";
+
+        // 100 birimi 20 saniyeye dönüştürüyoruz (100 / 5 = 20)
+        const seconds = (timeLeft / 5).toFixed(1);
+        timerVal.innerText = `${seconds}s`;
+
+        if (timeLeft <= 0) endGame();
+      }
+
+      function handleChoice(playerSaysPrime) {
+        if (!gameActive) return;
+
+        const correct = isPrime(currentNumber);
+        const isWinner = playerSaysPrime === correct;
+
+        const xDir = playerSaysPrime ? 600 : -600;
+        card.style.transform = `translate(${xDir}px, -150px) rotate(${xDir / 8}deg)`;
+        card.style.opacity = "0";
+
+        if (isWinner) {
+          score++;
+          scoreDisplay.innerText = score;
+          // Doğru cevapta yaklaşık 2.5 saniye bonus
+          timeLeft = Math.min(100, timeLeft + 12);
+          showFeedback(true);
+          sounds.correct();
+        } else {
+          // Yanlış cevapta yaklaşık 5 saniye ceza
+          timeLeft -= 25;
+          showFeedback(false);
+          sounds.wrong();
+          document.body.classList.add("shake");
+          setTimeout(() => document.body.classList.remove("shake"), 400);
+        }
+
+        setTimeout(generateNumber, 250);
+      }
+
+      function showFeedback(isCorrect) {
+        feedbackFlash.className = `fixed inset-0 pointer-events-none z-40 ${isCorrect ? "flash-correct" : "flash-wrong"} flash-active`;
+        setTimeout(
+          () =>
+            (feedbackFlash.className =
+              "fixed inset-0 pointer-events-none z-40 opacity-0"),
+          400,
+        );
+      }
+
+      function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem("primeGameHighScore", highScore);
+          highScoreDisplay.innerText = highScore;
+        }
+        document.getElementById("final-score").innerText = score;
+        document.getElementById("overlay").classList.remove("hidden");
+        document.getElementById("game-over-screen").classList.remove("hidden");
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (!gameActive) return;
+        if (e.key === "ArrowRight") handleChoice(true);
+        if (e.key === "ArrowLeft") handleChoice(false);
+      });
+
+      let startX = 0;
+      card.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+        card.style.transition = "none";
+      });
+
+      card.addEventListener("touchmove", (e) => {
+        if (!gameActive) return;
+        const currentX = e.touches[0].clientX;
+        const diff = currentX - startX;
+        const rotation = diff / 12;
+        card.style.transform = `translate(${diff}px, 0) rotate(${rotation}deg)`;
+      });
+
+      card.addEventListener("touchend", (e) => {
+        if (!gameActive) return;
+        const diff = e.changedTouches[0].clientX - startX;
+        if (Math.abs(diff) > 80) {
+          handleChoice(diff > 0);
+        } else {
+          card.style.transition = "transform 0.3s ease";
+          card.style.transform = "translate(0,0) rotate(0)";
+        }
+      });
+    </script>
+  </body>
+</html>

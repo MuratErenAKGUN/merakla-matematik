@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Çıkmış Sorular | Merakla Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;700&display=swap");
+      :root {
+        --dark-green: #0a4a34;
+        --mustard-yellow: #f4b41a;
+        --off-white: #ffffff;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        scroll-behavior: smooth;
+        background-color: var(--off-white);
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .playfair {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* ANA SAYFADAKİ YEŞİL HOVER EFEKTİ */
+      .nav-link {
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-size: 15px !important;
+        white-space: nowrap;
+        color: var(--dark-green); /* Yazı rengi sabit yeşil */
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 3px;
+        bottom: -5px;
+        left: 0;
+        background-color: var(--dark-green); /* Alt çizgi yeşil */
+        transition: width 0.3s ease;
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      .exam-badge {
+        @apply w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors;
+      }
+
+      /* ANİMASYONLAR */
+      .reveal {
+        opacity: 0;
+        transition: all 1.2s ease-out;
+      }
+      .reveal-left {
+        transform: translateX(-100px);
+      }
+      .reveal-right {
+        transform: translateX(100px);
+      }
+      .reveal-visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      /* Kaydırma Çubuğu */
+      .custom-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      .custom-scroll::-webkit-scrollbar-thumb {
+        background: #0a4a34;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="text-gray-900">
+    <nav
+      class="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b-2 border-[#0a4a34]/10 z-50"
+    >
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center h-32 lg:h-40">
+          <a href="merakla.html" class="flex-shrink-0">
+            <img
+              src="MERAKLA%20MATEMATIK.jpg"
+              alt="Logo"
+              class="h-28 lg:h-36 w-auto object-contain transition-transform hover:scale-105"
+            />
+          </a>
+          <div class="flex-1 flex justify-center">
+            <div
+              class="hidden lg:flex gap-10 items-center text-[#0a4a34] font-bold uppercase tracking-wider"
+            >
+              <a href="ben-kimim.html" class="nav-link">Ben Kimim</a>
+              <a href="oyunlar.html" class="nav-link">Oyunlarımız</a>
+              <a href="cikmis-sorular.html" class="nav-link">Çıkmış Sorular</a>
+              <a href="ders-notlari.html" class="nav-link">Dersler & Notlar</a>
+              <a href="pomodoro.html" class="nav-link flex items-center gap-2">
+                <i class="fas fa-stopwatch text-[#f4b41a]"></i> Pomodoro
+              </a>
+            </div>
+          </div>
+          <div class="hidden lg:block lg:w-[150px]"></div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto pt-64 pb-32 px-4">
+      <div
+        class="text-center mb-16 reveal reveal-visible"
+        style="transition-delay: 0.1s"
+      >
+        <h2
+          class="text-5xl lg:text-6xl font-bold text-[#0a4a34] playfair italic mb-4"
+        >
+          Çıkmış Sorular Arşivi
+        </h2>
+        <p class="text-gray-500 italic text-lg tracking-wide">
+          2018 - 2025 Arasındaki Tüm Sınav Dökümanları
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div
+          class="bg-white rounded-[40px] shadow-2xl overflow-hidden reveal reveal-left"
+          id="lgs-reveal"
+        >
+          <div
+            class="bg-[#0a4a34] p-10 flex justify-between items-center text-white"
+          >
+            <div>
+              <h3 class="text-4xl font-bold playfair italic">LGS Arşivi</h3>
+              <p class="text-white/60 text-xs mt-2 uppercase tracking-widest">
+                Liselere Geçiş Sınavı
+              </p>
+            </div>
+            <i class="fas fa-pencil-ruler text-5xl opacity-20"></i>
+          </div>
+          <div
+            class="p-8 space-y-4 max-h-[600px] overflow-y-auto custom-scroll"
+            id="lgs-list"
+          ></div>
+        </div>
+
+        <div
+          class="bg-white rounded-[40px] shadow-2xl overflow-hidden reveal reveal-right"
+          id="yks-reveal"
+        >
+          <div
+            class="bg-[#f4b41a] p-10 flex justify-between items-center text-[#0a4a34]"
+          >
+            <div>
+              <h3 class="text-4xl font-bold playfair italic">YKS Arşivi</h3>
+              <p
+                class="text-[#0a4a34]/60 text-xs mt-2 uppercase tracking-widest"
+              >
+                Yükseköğretim Kurumları Sınavı
+              </p>
+            </div>
+            <i class="fas fa-university text-5xl opacity-20"></i>
+          </div>
+          <div
+            class="p-8 space-y-4 max-h-[600px] overflow-y-auto custom-scroll"
+            id="yks-list"
+          ></div>
+        </div>
+      </div>
+
+      <div class="mt-20 flex justify-center">
+        <a
+          href="merakla.html"
+          class="px-12 py-4 border-2 border-[#0a4a34] text-[#0a4a34] rounded-full font-bold hover:bg-[#0a4a34] hover:text-white transition-all shadow-md group"
+        >
+          <i
+            class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"
+          ></i>
+          Ana Sayfaya Dön
+        </a>
+      </div>
+    </main>
+
+    <footer class="bg-[#0a4a34] text-white/40 py-12 text-center">
+      <p class="text-xs tracking-[0.3em] uppercase">
+        © 2026 MERAKLA MATEMATİK | MURAT EREN AKGÜN
+      </p>
+    </footer>
+
+    <script>
+      const years = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018];
+
+      function renderArsiv() {
+        document.getElementById("lgs-list").innerHTML = years
+          .map(
+            (y) => `
+          <div class="flex items-center justify-between p-5 border-b border-gray-50 group hover:bg-gray-50 rounded-2xl transition-all">
+            <div class="flex items-center gap-4 text-left">
+              <div class="exam-badge bg-green-50 text-[#0a4a34] group-hover:bg-[#0a4a34] group-hover:text-white">${y.toString().slice(-2)}</div>
+              <div>
+                <h4 class="font-bold text-gray-800 text-lg">${y} LGS ${y === 2025 ? '<span class="text-[10px] ml-2 text-gray-400 font-normal italic">Güncel</span>' : ""}</h4>
+                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Sayısal & Sözel Kitapçıklar</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <a href="arsiv/lgs-sozel-${y}.pdf" download class="px-4 py-2 bg-gray-100 rounded-xl text-[10px] font-bold text-gray-600 hover:bg-[#0a4a34] hover:text-white transition-all">SÖZEL</a>
+              <a href="arsiv/lgs-sayisal-${y}.pdf" download class="px-4 py-2 bg-gray-100 rounded-xl text-[10px] font-bold text-gray-600 hover:bg-[#0a4a34] hover:text-white transition-all">SAYISAL</a>
+            </div>
+          </div>`,
+          )
+          .join("");
+
+        document.getElementById("yks-list").innerHTML = years
+          .map(
+            (y) => `
+          <div class="flex items-center justify-between p-5 border-b border-gray-50 group hover:bg-gray-50 rounded-2xl transition-all">
+            <div class="flex items-center gap-4 text-left">
+              <div class="exam-badge bg-amber-50 text-[#f4b41a] group-hover:bg-[#f4b41a] group-hover:text-white">${y.toString().slice(-2)}</div>
+              <div>
+                <h4 class="font-bold text-gray-800 text-lg">${y} YKS ${y === 2025 ? '<span class="text-[10px] ml-2 text-gray-400 font-normal italic">Güncel</span>' : ""}</h4>
+                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">TYT & AYT Matematik</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <a href="arsiv/tyt-${y}.pdf" download class="px-4 py-2 bg-gray-100 rounded-xl text-[10px] font-bold text-gray-600 hover:bg-[#0a4a34] hover:text-white transition-all">TYT</a>
+              <a href="arsiv/ayt-${y}.pdf" download class="px-4 py-2 bg-gray-100 rounded-xl text-[10px] font-bold text-gray-600 hover:bg-[#0a4a34] hover:text-white transition-all">AYT</a>
+            </div>
+          </div>`,
+          )
+          .join("");
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        renderArsiv();
+        setTimeout(() => {
+          document.getElementById("lgs-reveal").classList.add("reveal-visible");
+        }, 200);
+        setTimeout(() => {
+          document.getElementById("yks-reveal").classList.add("reveal-visible");
+        }, 400);
+      });
+    </script>
+  </body>
+</html>

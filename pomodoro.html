@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomodoro | Merakla Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;700&display=swap");
+      :root {
+        --dark-green: #0a4a34;
+        --mustard-yellow: #f4b41a;
+        --off-white: #ffffff;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        scroll-behavior: smooth;
+        background-color: var(--off-white);
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .playfair {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* ANA SAYFADAKİ YEŞİL HOVER EFEKTİ */
+      .nav-link {
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-size: 15px !important;
+        white-space: nowrap;
+        color: var(--dark-green); /* Yazı rengi yeşil */
+      }
+
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 3px;
+        bottom: -5px;
+        left: 0;
+        background-color: var(--dark-green); /* Alt çizgi yeşil */
+        transition: width 0.3s ease;
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      .pomodoro-btn {
+        @apply px-10 py-3 rounded-2xl font-bold transition-all duration-300 border-2 text-sm uppercase tracking-widest;
+      }
+      .pomodoro-active {
+        @apply bg-[#f4b41a] text-[#0a4a34] border-[#f4b41a] shadow-lg scale-105;
+      }
+      .pomodoro-inactive {
+        @apply border-[#0a4a34]/10 text-[#0a4a34]/60 hover:border-[#f4b41a];
+      }
+
+      .reveal-up {
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 1s ease-out;
+      }
+      .reveal-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body class="text-gray-900">
+    <nav
+      class="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b-2 border-[#0a4a34]/10 z-50"
+    >
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center h-32 lg:h-40">
+          <a href="merakla.html" class="flex-shrink-0">
+            <img
+              src="MERAKLA%20MATEMATIK.jpg"
+              alt="Logo"
+              class="h-28 lg:h-36 w-auto object-contain transition-transform hover:scale-105"
+            />
+          </a>
+          <div class="flex-1 flex justify-center">
+            <div
+              class="hidden lg:flex gap-10 items-center text-[#0a4a34] font-bold uppercase tracking-wider"
+            >
+              <a href="ben-kimim.html" class="nav-link">Ben Kimim</a>
+              <a href="oyunlar.html" class="nav-link">Oyunlarımız</a>
+              <a href="cikmis-sorular.html" class="nav-link">Çıkmış Sorular</a>
+              <a href="ders-notlari.html" class="nav-link">Dersler & Notlar</a>
+              <a href="pomodoro.html" class="nav-link flex items-center gap-2">
+                <i class="fas fa-stopwatch text-[#f4b41a]"></i> Pomodoro
+              </a>
+            </div>
+          </div>
+          <div class="hidden lg:block lg:w-[150px]"></div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto pt-64 pb-32 px-4 flex flex-col items-center">
+      <div class="text-center mb-12">
+        <h2
+          class="text-5xl lg:text-6xl font-bold text-[#0a4a34] playfair italic mb-4"
+        >
+          Odaklanma Zamanı
+        </h2>
+        <p class="text-gray-500 italic text-lg">
+          Zihnini hazırla ve sadece hedefine odaklan.
+        </p>
+      </div>
+
+      <div
+        class="bg-white p-12 md:p-16 rounded-[60px] shadow-2xl text-center w-full max-w-xl border-b-8 border-[#0a4a34] reveal-up"
+        id="pomo-card"
+      >
+        <div class="flex justify-center gap-4 mb-12">
+          <button
+            onclick="setMode('work')"
+            id="work-btn"
+            class="pomodoro-btn pomodoro-active"
+          >
+            Çalışma
+          </button>
+          <button
+            onclick="setMode('break')"
+            id="break-btn"
+            class="pomodoro-btn pomodoro-inactive"
+          >
+            Mola
+          </button>
+        </div>
+        <div
+          class="text-9xl font-bold text-[#0a4a34] mb-12 tracking-tighter leading-none"
+          id="timer-display"
+        >
+          25:00
+        </div>
+        <div class="flex justify-center gap-8">
+          <button
+            onclick="toggleTimer()"
+            id="start-btn"
+            class="w-24 h-24 bg-[#0a4a34] text-white rounded-full text-2xl flex items-center justify-center shadow-xl hover:scale-110 transition-all"
+          >
+            <i class="fas fa-play"></i>
+          </button>
+          <button
+            onclick="resetTimer()"
+            class="w-24 h-24 border-2 border-[#0a4a34] text-[#0a4a34] rounded-full text-2xl flex items-center justify-center hover:bg-gray-50 transition-all"
+          >
+            <i class="fas fa-redo-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-20">
+        <a
+          href="merakla.html"
+          class="px-10 py-4 border-2 border-[#0a4a34] text-[#0a4a34] rounded-full font-bold hover:bg-[#0a4a34] hover:text-white transition-all shadow-md"
+          >Ana Sayfaya Dön</a
+        >
+      </div>
+    </main>
+
+    <script>
+      let timeLeft = 25 * 60,
+        timerId = null,
+        currentMode = "work";
+      function updateDisplay() {
+        const m = Math.floor(timeLeft / 60),
+          s = timeLeft % 60;
+        document.getElementById("timer-display").textContent =
+          `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+      }
+      function setMode(mode) {
+        clearInterval(timerId);
+        timerId = null;
+        currentMode = mode;
+        timeLeft = mode === "work" ? 25 * 60 : 5 * 60;
+        document.getElementById("start-btn").innerHTML =
+          '<i class="fas fa-play"></i>';
+        document.getElementById("work-btn").className =
+          mode === "work"
+            ? "pomodoro-btn pomodoro-active"
+            : "pomodoro-btn pomodoro-inactive";
+        document.getElementById("break-btn").className =
+          mode === "break"
+            ? "pomodoro-btn pomodoro-active"
+            : "pomodoro-btn pomodoro-inactive";
+        updateDisplay();
+      }
+      function toggleTimer() {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+          document.getElementById("start-btn").innerHTML =
+            '<i class="fas fa-play"></i>';
+        } else {
+          timerId = setInterval(() => {
+            if (timeLeft > 0) {
+              timeLeft--;
+              updateDisplay();
+            } else {
+              clearInterval(timerId);
+              alert("Süre bitti!");
+            }
+          }, 1000);
+          document.getElementById("start-btn").innerHTML =
+            '<i class="fas fa-pause"></i>';
+        }
+      }
+      function resetTimer() {
+        setMode(currentMode);
+      }
+      window.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+          document.getElementById("pomo-card").classList.add("reveal-visible");
+        }, 200);
+      });
+    </script>
+  </body>
+</html>

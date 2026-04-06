@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dersler ve Notlar | Merakla Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;700&display=swap");
+      :root {
+        --dark-green: #0a4a34;
+        --mustard-yellow: #f4b41a;
+        --off-white: #ffffff;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        scroll-behavior: smooth;
+        background-color: var(--off-white);
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .playfair {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* Navbar ve Hover Efekti */
+      .nav-link {
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-size: 15px !important;
+        white-space: nowrap;
+        color: var(--dark-green);
+      }
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 3px;
+        left: 0;
+        bottom: -5px;
+        background-color: var(--dark-green);
+        transition: all 0.3s ease;
+      }
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      /* Video Kartları Animasyonu */
+      .video-card {
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        border: 1px solid rgba(10, 74, 52, 0.1);
+        height: 100%;
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      .video-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--mustard-yellow);
+        box-shadow: 0 25px 50px -12px rgba(10, 74, 52, 0.15);
+      }
+
+      .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        border-radius: 1.5rem 1.5rem 0 0;
+        background: #000;
+      }
+      .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .reveal-visible {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+      }
+    </style>
+  </head>
+  <body class="text-gray-900">
+    <!-- Navigasyon (Düz Beyaz Arka Plan) -->
+    <nav class="fixed top-0 w-full bg-white border-b border-gray-100 z-50">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center h-32 lg:h-40">
+          <a href="merakla.html" class="flex-shrink-0">
+            <img
+              src="MERAKLA%20MATEMATIK.jpg"
+              alt="Logo"
+              class="h-28 lg:h-36 w-auto object-contain transition-transform hover:scale-105"
+            />
+          </a>
+          <div class="flex-1 flex justify-center">
+            <div
+              class="hidden lg:flex gap-10 items-center font-bold uppercase tracking-wider"
+            >
+              <a href="ben-kimim.html" class="nav-link">Ben Kimim</a>
+              <a href="oyunlar.html" class="nav-link">Oyunlarımız</a>
+              <a href="cikmis-sorular.html" class="nav-link">Çıkmış Sorular</a>
+              <a href="ders-notlari.html" class="nav-link">Dersler & Notlar</a>
+              <a href="pomodoro.html" class="nav-link flex items-center gap-2">
+                <i class="fas fa-stopwatch text-[#f4b41a]"></i> Pomodoro
+              </a>
+            </div>
+          </div>
+          <div class="hidden lg:block lg:w-[150px]"></div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto pt-56 pb-20 px-4">
+      <div class="text-center mb-16">
+        <h2 class="playfair text-5xl font-bold text-[#0a4a34] mb-4 italic">
+          Ders Videoları & Notlar
+        </h2>
+        <div class="w-24 h-1 bg-[#f4b41a] mx-auto mb-6 rounded-full"></div>
+        <p class="text-gray-500 italic text-lg">
+          Matematiği sindirerek öğrenmeniz için özenle hazırlanan içerikler.
+        </p>
+      </div>
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+        id="unit-grid"
+      >
+        <!-- Kartlar JS ile yüklenecek -->
+      </div>
+
+      <div class="mt-20 flex justify-center">
+        <a
+          href="merakla.html"
+          class="px-12 py-4 border-2 border-[#0a4a34] text-[#0a4a34] rounded-full font-bold hover:bg-[#0a4a34] hover:text-white transition-all flex items-center gap-3 shadow-md"
+        >
+          <i class="fas fa-arrow-left"></i> Ana Sayfaya Dön
+        </a>
+      </div>
+    </main>
+
+    <footer class="bg-[#0a4a34] text-white/40 py-12 text-center">
+      <p class="text-xs tracking-[0.3em] uppercase">
+        © 2026 MERAKLA MATEMATİK | MURAT EREN AKGÜN
+      </p>
+    </footer>
+
+    <script>
+      /**
+       * Güncel Video ID'si: B59lD62cbXU
+       */
+      const GLOBAL_VIDEO_ID = "B59lD62cbXU";
+
+      const units = [
+        { title: "Çarpanlar ve Katlar", pdf: "notlar/carpanlar.pdf" },
+        { title: "Üslü İfadeler", pdf: "notlar/uslu-ifadeler.pdf" },
+        { title: "Kareköklü İfadeler", pdf: "notlar/karekoklu-ifadeler.pdf" },
+        { title: "Veri Analizi", pdf: "notlar/veri-analizi.pdf" },
+        { title: "Olasılık", pdf: "notlar/olasilik.pdf" },
+        { title: "Cebirsel İfadeler", pdf: "notlar/cebirsel-ifadeler.pdf" },
+        { title: "Doğrusal Denklemler", pdf: "notlar/dogrusal-denklemler.pdf" },
+        { title: "Eşitsizlikler", pdf: "notlar/esitsizlikler.pdf" },
+        { title: "Üçgenler", pdf: "notlar/ucgenler.pdf" },
+        { title: "Eşlik ve Benzerlik", pdf: "notlar/eslik-benzerlik.pdf" },
+        { title: "Dönüşüm Geometrisi", pdf: "notlar/donusum-geometrisi.pdf" },
+        { title: "Geometrik Cisimler", pdf: "notlar/geometrik-cisimler.pdf" },
+      ];
+
+      const grid = document.getElementById("unit-grid");
+
+      // Hata 153 için daha güvenli bir parametre yapısı
+      // 'origin' bazen preview modunda 'null' dönebilir, bu yüzden sadece varsa ekliyoruz.
+      const originParam =
+        window.location.origin && window.location.origin !== "null"
+          ? `&origin=${window.location.origin}`
+          : "";
+
+      grid.innerHTML = units
+        .map(
+          (unit, index) => `
+          <div class="video-card bg-white rounded-[32px] overflow-hidden flex flex-col shadow-sm" style="transition-delay: ${index * 40}ms">
+            <div class="video-container">
+              <iframe 
+                src="https://www.youtube.com/embed/${GLOBAL_VIDEO_ID}?enablejsapi=1&autoplay=0&rel=0&modestbranding=1${originParam}" 
+                title="${unit.title}"
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+              </iframe>
+            </div>
+            <div class="p-8 flex flex-col flex-1">
+              <h3 class="font-bold text-[#0a4a34] text-xl mb-8">${unit.title}</h3>
+              <a href="${unit.pdf}" class="w-full py-4 bg-[#f4b41a] text-[#0a4a34] rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-[#0a4a34] hover:text-white transition-all shadow-md group">
+                  Ders Notunu Oku <i class="fas fa-book-open group-hover:scale-110 transition-transform"></i>
+              </a>
+            </div>
+          </div>`,
+        )
+        .join("");
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Kartları anında gösteren tetikleyici
+        setTimeout(() => {
+          document
+            .querySelectorAll(".video-card")
+            .forEach((card) => card.classList.add("reveal-visible"));
+        }, 50);
+      });
+    </script>
+  </body>
+</html>

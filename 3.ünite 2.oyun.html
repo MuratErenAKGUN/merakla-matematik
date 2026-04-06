@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kökten Gecis - LGS Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Türkçe karakter desteği için latin-ext eklendi */
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap&subset=latin-ext");
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: "Roboto", sans-serif;
+        background-color: #020617;
+        user-select: none;
+        touch-action: manipulation;
+      }
+
+      #gameCanvas {
+        display: block;
+        margin: 0 auto;
+        background: radial-gradient(circle at center, #1e1b4b, #020617);
+        border-left: 2px solid #312e81;
+        border-right: 2px solid #312e81;
+      }
+
+      .ui-panel {
+        font-family: "Orbitron", "Roboto", sans-serif;
+        pointer-events: none;
+      }
+
+      .neon-glow {
+        text-shadow:
+          0 0 10px rgba(59, 130, 246, 0.8),
+          0 0 20px rgba(59, 130, 246, 0.5);
+      }
+
+      .neon-border {
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Üst Arayüz -->
+    <div
+      class="absolute top-0 left-0 w-full p-4 flex justify-between items-start ui-panel z-10"
+    >
+      <div
+        class="bg-slate-900/90 p-4 rounded-3xl border-2 border-blue-500 neon-border"
+      >
+        <p
+          class="text-blue-400 text-[10px] uppercase tracking-[0.3em] mb-1 font-bold"
+        >
+          Hedef Ifade
+        </p>
+        <h2
+          id="targetText"
+          class="text-4xl font-bold text-white tracking-tighter neon-glow"
+        >
+          √??
+        </h2>
+      </div>
+      <div class="text-right">
+        <div
+          class="bg-slate-900/90 p-4 rounded-3xl border-2 border-fuchsia-500 neon-border inline-block"
+        >
+          <p
+            class="text-fuchsia-400 text-[10px] uppercase tracking-[0.3em] mb-1 font-bold"
+          >
+            Puan
+          </p>
+          <h2 id="scoreText" class="text-3xl font-bold text-white neon-glow">
+            0
+          </h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Başla/Tekrar Ekranı -->
+    <div
+      id="overlay"
+      class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center text-center p-6"
+    >
+      <h1
+        class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-fuchsia-500 mb-6 font-['Orbitron'] tracking-tighter uppercase"
+      >
+        KÖKTEN GECIS
+      </h1>
+      <p class="text-slate-300 mb-10 max-w-sm leading-relaxed">
+        Havadaki köklü sayının değerini tahmin et ve
+        <span class="text-fuchsia-400 font-bold">doğru aralıktan</span> geçerek
+        ilerle!
+      </p>
+      <button
+        id="startBtn"
+        class="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white font-bold py-5 px-16 rounded-2xl text-2xl shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all active:scale-95 font-['Orbitron'] border-b-4 border-blue-800"
+      >
+        BASLAT
+      </button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const targetText = document.getElementById("targetText");
+      const scoreText = document.getElementById("scoreText");
+      const overlay = document.getElementById("overlay");
+      const startBtn = document.getElementById("startBtn");
+
+      const config = {
+        gravity: 0.22,
+        jumpForce: -5.5,
+        pipeWidth: 110,
+        pipeSpeed: 3.2,
+        gapHeight: 130,
+        pipeSpawnRate: 180,
+      };
+
+      let bird, pipes, frameCount, score, isGameOver, gameActive;
+
+      const colors = {
+        blue: "#3b82f6",
+        fuchsia: "#d946ef",
+        cyan: "#22d3ee",
+        emerald: "#10b981",
+        amber: "#f59e0b",
+      };
+
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      function playSound(freq, type, duration, volume = 0.1) {
+        try {
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+      }
+
+      class Bird {
+        constructor() {
+          this.reset();
+        }
+        reset() {
+          this.x = 100;
+          this.y = canvas.height / 2;
+          this.velocity = 0;
+          this.radius = 22;
+          this.pulse = 0;
+        }
+        update() {
+          this.velocity += config.gravity;
+          this.y += this.velocity;
+          this.pulse += 0.1;
+
+          if (this.y + this.radius > canvas.height) this.gameOver();
+          if (this.y - this.radius < 0) this.y = this.radius;
+        }
+        draw() {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.velocity * 0.08);
+
+          ctx.shadowBlur = 15 + Math.sin(this.pulse) * 5;
+          ctx.shadowColor = colors.cyan;
+
+          const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, this.radius);
+          grad.addColorStop(0, "#fff");
+          grad.addColorStop(0.3, colors.cyan);
+          grad.addColorStop(1, "#083344");
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 16px Orbitron, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("√", -2, 6);
+          ctx.restore();
+        }
+        gameOver() {
+          endGame();
+        }
+      }
+
+      class Pipe {
+        constructor() {
+          this.x = canvas.width;
+          this.width = config.pipeWidth;
+          this.passed = false;
+          this.color = Math.random() > 0.5 ? colors.blue : colors.fuchsia;
+
+          const num = Math.floor(Math.random() * 140) + 10;
+          const root = Math.sqrt(num);
+          const base = Math.floor(root);
+          this.targetStr = "√" + num;
+          this.correctAnswer = base + " - " + (base + 1);
+
+          let wrongBase;
+          if (Math.random() > 0.5)
+            wrongBase = base + (Math.random() > 0.5 ? 1 : -1);
+          else wrongBase = Math.floor(Math.random() * 12) + 1;
+          if (wrongBase === base) wrongBase += 1;
+          this.wrongAnswer =
+            Math.max(1, wrongBase) + " - " + (Math.max(1, wrongBase) + 1);
+
+          this.gap1Y = canvas.height * 0.28;
+          this.gap2Y = canvas.height * 0.72;
+          this.correctGap = Math.random() > 0.5 ? 1 : 2;
+        }
+
+        update() {
+          this.x -= config.pipeSpeed;
+        }
+
+        draw() {
+          ctx.save();
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = this.color;
+
+          ctx.fillStyle = "#0f172a";
+          ctx.fillRect(this.x, 0, this.width, canvas.height);
+
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(this.x, 0, this.width, canvas.height);
+
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.fillRect(
+            this.x - 2,
+            this.gap1Y - config.gapHeight / 2,
+            this.width + 4,
+            config.gapHeight,
+          );
+          ctx.fillRect(
+            this.x - 2,
+            this.gap2Y - config.gapHeight / 2,
+            this.width + 4,
+            config.gapHeight,
+          );
+          ctx.globalCompositeOperation = "source-over";
+
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.gap1Y - config.gapHeight / 2);
+          ctx.lineTo(this.x + this.width, this.gap1Y - config.gapHeight / 2);
+          ctx.moveTo(this.x, this.gap1Y + config.gapHeight / 2);
+          ctx.lineTo(this.x + this.width, this.gap1Y + config.gapHeight / 2);
+
+          ctx.moveTo(this.x, this.gap2Y - config.gapHeight / 2);
+          ctx.lineTo(this.x + this.width, this.gap2Y - config.gapHeight / 2);
+          ctx.moveTo(this.x, this.gap2Y + config.gapHeight / 2);
+          ctx.lineTo(this.x + this.width, this.gap2Y + config.gapHeight / 2);
+          ctx.stroke();
+
+          ctx.shadowBlur = 5;
+          ctx.fillStyle = "#fff";
+          ctx.font = "700 22px Orbitron, sans-serif";
+          ctx.textAlign = "center";
+
+          const text1 =
+            this.correctGap === 1 ? this.correctAnswer : this.wrongAnswer;
+          const text2 =
+            this.correctGap === 2 ? this.correctAnswer : this.wrongAnswer;
+
+          ctx.fillText(text1, this.x + this.width / 2, this.gap1Y + 8);
+          ctx.fillText(text2, this.x + this.width / 2, this.gap2Y + 8);
+          ctx.restore();
+        }
+      }
+
+      function resize() {
+        canvas.width = Math.min(window.innerWidth, 500);
+        canvas.height = window.innerHeight;
+      }
+
+      function resetGame() {
+        bird = new Bird();
+        pipes = [];
+        frameCount = 0;
+        score = 0;
+        isGameOver = false;
+        gameActive = true;
+        scoreText.innerText = score;
+        overlay.classList.add("hidden");
+        targetText.innerText = "√??";
+      }
+
+      function endGame() {
+        if (isGameOver) return;
+        isGameOver = true;
+        gameActive = false;
+        playSound(100, "sawtooth", 0.6, 0.2);
+        overlay.classList.remove("hidden");
+        overlay.querySelector("h1").innerText = "KAYBETTIN";
+        overlay.querySelector("p").innerHTML =
+          `Skor: <span class="text-fuchsia-400 text-3xl font-bold">${score}</span><br>Hesaplamada hata yaptın ya da duvara çarptın!`;
+        startBtn.innerText = "YENIDEN DENE";
+      }
+
+      function update() {
+        if (!gameActive) return;
+
+        bird.update();
+
+        if (frameCount % config.pipeSpawnRate === 0) {
+          const p = new Pipe();
+          pipes.push(p);
+          targetText.innerText = p.targetStr;
+          targetText.style.color = p.color;
+        }
+
+        pipes.forEach((p, index) => {
+          p.update();
+
+          if (
+            bird.x + bird.radius > p.x &&
+            bird.x - bird.radius < p.x + p.width
+          ) {
+            const inGap1 =
+              bird.y > p.gap1Y - config.gapHeight / 2 &&
+              bird.y < p.gap1Y + config.gapHeight / 2;
+            const inGap2 =
+              bird.y > p.gap2Y - config.gapHeight / 2 &&
+              bird.y < p.gap2Y + config.gapHeight / 2;
+
+            if (inGap1) {
+              if (p.correctGap !== 1) endGame();
+            } else if (inGap2) {
+              if (p.correctGap !== 2) endGame();
+            } else {
+              endGame();
+            }
+          }
+
+          if (!p.passed && p.x + p.width < bird.x) {
+            p.passed = true;
+            score++;
+            scoreText.innerText = score;
+            playSound(880, "sine", 0.1);
+            playSound(1320, "sine", 0.2);
+          }
+
+          if (p.x + p.width < 0) pipes.splice(index, 1);
+        });
+
+        frameCount++;
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = "#1e1b4b";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += 50) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, canvas.height);
+          ctx.stroke();
+        }
+        for (let i = 0; i < canvas.height; i += 50) {
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(canvas.width, i);
+          ctx.stroke();
+        }
+
+        pipes.forEach((p) => p.draw());
+        bird.draw();
+
+        if (gameActive)
+          requestAnimationFrame(() => {
+            update();
+            draw();
+          });
+      }
+
+      function handleAction() {
+        if (!gameActive) return;
+        bird.velocity = config.jumpForce;
+        playSound(400, "triangle", 0.08);
+      }
+
+      window.addEventListener("mousedown", handleAction);
+      window.addEventListener(
+        "touchstart",
+        (e) => {
+          handleAction();
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          handleAction();
+          e.preventDefault();
+        }
+      });
+
+      startBtn.onclick = () => {
+        resetGame();
+        draw();
+      };
+
+      window.onload = resize;
+      window.onresize = resize;
+    </script>
+  </body>
+</html>

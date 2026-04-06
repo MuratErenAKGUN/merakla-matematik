@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Çarpan Düşüşü Pro - LGS Matematik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #0f172a;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        touch-action: none;
+      }
+      #game-canvas {
+        display: block;
+        background: linear-gradient(to bottom, #1e293b, #0f172a);
+      }
+      .ui-element {
+        pointer-events: none;
+        user-select: none;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      .target-pulse {
+        animation: pulse 2s infinite;
+      }
+      /* Skor ve Kombo Animasyonu */
+      .pop-animation {
+        animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.4);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      /* Ekran Titremesi */
+      .shake {
+        animation: shake 0.2s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        animation-iteration-count: 2;
+      }
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translate3d(-2px, 0, 0);
+        }
+        20%,
+        80% {
+          transform: translate3d(4px, 0, 0);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-8px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(8px, 0, 0);
+        }
+      }
+      /* Kırmızı Flaş */
+      #flash-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(239, 68, 68, 0.4);
+        pointer-events: none;
+        opacity: 0;
+        z-index: 40;
+        transition: opacity 0.1s;
+      }
+      .flash-active {
+        opacity: 1 !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="flash-overlay"></div>
+
+    <!-- Oyun Üst Bilgi Paneli -->
+    <div
+      class="fixed top-0 left-0 w-full p-4 flex justify-between items-start text-white ui-element z-10"
+    >
+      <div class="flex flex-col gap-2">
+        <div
+          id="score-container"
+          class="bg-black/30 backdrop-blur-md p-3 rounded-xl border border-white/10"
+        >
+          <div class="text-sm opacity-60 uppercase tracking-tighter">SKOR</div>
+          <div class="text-3xl font-black text-blue-400" id="score">0</div>
+          <div class="text-xs opacity-50">
+            En Yüksek: <span id="high-score">0</span>
+          </div>
+        </div>
+        <div id="combo-container" class="hidden">
+          <div
+            class="bg-yellow-500 text-black px-3 py-1 rounded-full font-bold text-center shadow-lg shadow-yellow-500/20"
+          >
+            KOMBO X<span id="combo-val">1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <div
+          class="bg-blue-600 px-8 py-3 rounded-2xl border-4 border-blue-400 target-pulse shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+        >
+          <div class="text-xs uppercase tracking-widest font-bold">
+            HEDEF SAYI
+          </div>
+          <div id="target-number" class="text-5xl font-black">36</div>
+        </div>
+        <div
+          id="target-timer"
+          class="w-full h-2 bg-white/10 mt-3 rounded-full overflow-hidden border border-white/5"
+        >
+          <div
+            id="target-progress"
+            class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 w-full transition-all duration-100 ease-linear"
+          ></div>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-end gap-2">
+        <div
+          class="bg-black/30 backdrop-blur-md p-3 rounded-xl border border-white/10 text-right min-w-[100px]"
+        >
+          <div class="text-sm opacity-60 uppercase tracking-tighter">
+            CANLAR
+          </div>
+          <div class="text-2xl flex gap-1 justify-end" id="lives-container">
+            ❤️ ❤️ ❤️
+          </div>
+        </div>
+        <div
+          class="bg-blue-900/40 px-3 py-1 rounded-lg border border-blue-400/30 text-xs font-bold"
+        >
+          SEVİYE <span id="level">1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Başlangıç ve Bitiş Ekranları -->
+    <div
+      id="overlay"
+      class="fixed inset-0 bg-slate-900/90 flex items-center justify-center z-50 text-white text-center p-6 backdrop-blur-sm"
+    >
+      <div id="start-screen">
+        <h1
+          class="text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300"
+        >
+          ÇARPAN DÜŞÜŞÜ
+        </h1>
+        <p class="text-xl mb-8 max-w-md mx-auto text-slate-300 leading-relaxed">
+          Düşen sayılardan sadece
+          <span class="text-yellow-400 font-bold underline">Mavi Hedef</span>'in
+          çarpanlarını yakala! <br />
+          <span class="text-sm italic opacity-70"
+            >Hedef değiştikçe odaklanmayı unutma.</span
+          >
+        </p>
+        <button
+          id="start-btn"
+          class="bg-blue-600 hover:bg-blue-500 text-white text-3xl font-black px-16 py-5 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_10px_0_rgb(29,78,216)] border-2 border-blue-400"
+        >
+          BAŞLAT
+        </button>
+      </div>
+
+      <div id="game-over-screen" class="hidden">
+        <div class="mb-4 text-8xl">🚫</div>
+        <h1 class="text-6xl font-black mb-2 text-red-500">OYUN BİTTİ</h1>
+        <p class="text-3xl mb-8">
+          Puanın:
+          <span id="final-score" class="text-yellow-400 font-bold">0</span>
+        </p>
+        <button
+          id="restart-btn"
+          class="bg-green-600 hover:bg-green-500 text-white text-3xl font-black px-16 py-5 rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-[0_10px_0_rgb(21,128,61)] border-2 border-green-400"
+        >
+          YENİDEN DENE
+        </button>
+      </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+      // --- SES SİSTEMİ (Web Audio API) ---
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      function playSound(freq, type, duration, volume = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioCtx.currentTime + duration,
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      }
+
+      const sounds = {
+        correct: () => {
+          playSound(600, "sine", 0.1);
+          setTimeout(() => playSound(800, "sine", 0.1), 50);
+        },
+        wrong: () => {
+          playSound(150, "sawtooth", 0.3, 0.2);
+          playSound(100, "square", 0.3, 0.1);
+        },
+        targetChange: () => {
+          playSound(400, "triangle", 0.4);
+          playSound(500, "triangle", 0.4);
+        },
+        levelUp: () => {
+          [440, 554, 659, 880].forEach((f, i) => {
+            setTimeout(() => playSound(f, "sine", 0.3), i * 100);
+          });
+        },
+      };
+
+      // --- OYUN MANTIĞI ---
+      const canvas = document.getElementById("game-canvas");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score");
+      const highScoreEl = document.getElementById("high-score");
+      const targetEl = document.getElementById("target-number");
+      const targetProgressEl = document.getElementById("target-progress");
+      const levelEl = document.getElementById("level");
+      const livesContainer = document.getElementById("lives-container");
+      const overlay = document.getElementById("overlay");
+      const flashOverlay = document.getElementById("flash-overlay");
+      const startScreen = document.getElementById("start-screen");
+      const gameOverScreen = document.getElementById("game-over-screen");
+      const finalScoreEl = document.getElementById("final-score");
+      const comboContainer = document.getElementById("combo-container");
+      const comboVal = document.getElementById("combo-val");
+
+      let gameActive = false;
+      let score = 0;
+      let highScore = localStorage.getItem("factorFallHighScore") || 0;
+      let lives = 3;
+      let level = 1;
+      let combo = 0;
+      let targetNumber = 36;
+      let playerX = 0;
+      let items = [];
+      let particles = [];
+      let bgSymbols = [];
+      let lastTime = 0;
+      let spawnTimer = 0;
+      let targetChangeTimer = 0;
+
+      const config = {
+        baseSpeed: 2.8,
+        speedInc: 0.2,
+        spawnRate: 1100,
+        minSpawnRate: 350,
+        targetChangeDuration: 12000,
+        possibleTargets: [
+          12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 45, 48, 50, 54, 60, 64,
+          72, 80, 81, 90, 100,
+        ],
+      };
+
+      function init() {
+        resize();
+        playerX = canvas.width / 2;
+        window.addEventListener("resize", resize);
+        highScoreEl.innerText = highScore;
+
+        // Arka plan sembollerini oluştur
+        const symbols = ["+", "-", "×", "÷", "√", "?", "=", "%", "π"];
+        for (let i = 0; i < 25; i++) {
+          bgSymbols.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            text: symbols[Math.floor(Math.random() * symbols.length)],
+            size: Math.random() * 40 + 20,
+            speed: Math.random() * 0.5 + 0.1,
+            opacity: Math.random() * 0.15 + 0.05,
+          });
+        }
+
+        window.addEventListener("mousemove", (e) => (playerX = e.clientX));
+        window.addEventListener(
+          "touchmove",
+          (e) => {
+            if (e.touches[0]) playerX = e.touches[0].clientX;
+          },
+          { passive: false },
+        );
+
+        document
+          .getElementById("start-btn")
+          .addEventListener("click", startGame);
+        document
+          .getElementById("restart-btn")
+          .addEventListener("click", startGame);
+      }
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function startGame() {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+
+        score = 0;
+        lives = 3;
+        level = 1;
+        combo = 0;
+        items = [];
+        particles = [];
+        spawnTimer = 0;
+        targetChangeTimer = 0;
+        gameActive = true;
+
+        updateLivesUI();
+        updateScoreUI(false);
+        setNewTarget();
+
+        overlay.classList.add("hidden");
+        startScreen.classList.add("hidden");
+        gameOverScreen.classList.add("hidden");
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function triggerWrongFeedback() {
+        sounds.wrong();
+        document.body.classList.add("shake");
+        flashOverlay.classList.add("flash-active");
+
+        setTimeout(() => {
+          flashOverlay.classList.remove("flash-active");
+          setTimeout(() => {
+            flashOverlay.classList.add("flash-active");
+            setTimeout(() => {
+              flashOverlay.classList.remove("flash-active");
+              document.body.classList.remove("shake");
+            }, 100);
+          }, 100);
+        }, 100);
+      }
+
+      function setNewTarget() {
+        const oldTarget = targetNumber;
+        while (targetNumber === oldTarget) {
+          targetNumber =
+            config.possibleTargets[
+              Math.floor(Math.random() * config.possibleTargets.length)
+            ];
+        }
+        targetEl.innerText = targetNumber;
+        targetChangeTimer = 0;
+        sounds.targetChange();
+
+        targetEl.parentElement.classList.add("pop-animation");
+        setTimeout(
+          () => targetEl.parentElement.classList.remove("pop-animation"),
+          300,
+        );
+      }
+
+      function updateLivesUI() {
+        livesContainer.innerHTML = "❤️".repeat(lives);
+      }
+
+      function updateScoreUI(animate = true) {
+        scoreEl.innerText = score;
+        const newLevel = Math.floor(score / 15) + 1;
+        if (newLevel > level) {
+          level = newLevel;
+          sounds.levelUp();
+        }
+        levelEl.innerText = level;
+
+        if (combo > 1) {
+          comboContainer.classList.remove("hidden");
+          comboVal.innerText = combo;
+          if (animate) comboContainer.classList.add("pop-animation");
+        } else {
+          comboContainer.classList.add("hidden");
+        }
+
+        if (animate) {
+          scoreEl.parentElement.classList.add("pop-animation");
+          setTimeout(() => {
+            scoreEl.parentElement.classList.remove("pop-animation");
+            comboContainer.classList.remove("pop-animation");
+          }, 300);
+        }
+      }
+
+      function spawnItem() {
+        // Hedef sayıdan BÜYÜK OLMAYAN sayı seçimi
+        const isFactor = Math.random() > 0.45;
+        let value;
+
+        if (isFactor) {
+          const factors = [];
+          for (let i = 1; i <= targetNumber; i++) {
+            if (targetNumber % i === 0) factors.push(i);
+          }
+          value = factors[Math.floor(Math.random() * factors.length)];
+        } else {
+          // Sadece hedef sayıya kadar olan rastgele sayılar
+          value = Math.floor(Math.random() * targetNumber) + 1;
+          if (targetNumber % value === 0 && value < targetNumber) value += 1;
+          if (value > targetNumber) value = targetNumber - 1;
+        }
+
+        items.push({
+          x: Math.random() * (canvas.width - 80) + 40,
+          y: -60,
+          value: value,
+          radius: 30 + value.toString().length * 4,
+          speed:
+            config.baseSpeed + level * config.speedInc + Math.random() * 0.8,
+          color: `hsl(${Math.random() * 360}, 80%, 65%)`,
+          rot: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.05,
+        });
+      }
+
+      function drawBackground() {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        bgSymbols.forEach((s) => {
+          ctx.globalAlpha = s.opacity;
+          ctx.fillStyle = "#ffffff";
+          ctx.font = `bold ${s.size}px Arial`;
+          ctx.fillText(s.text, s.x, s.y);
+
+          s.y += s.speed;
+          if (s.y > canvas.height + 50) {
+            s.y = -50;
+            s.x = Math.random() * canvas.width;
+          }
+        });
+        ctx.globalAlpha = 1.0;
+      }
+
+      function gameLoop(timestamp) {
+        if (!gameActive) return;
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawBackground();
+
+        // Hedef Zaman Çubuğu
+        targetChangeTimer += deltaTime;
+        const progress = 1 - targetChangeTimer / config.targetChangeDuration;
+        targetProgressEl.style.width = progress * 100 + "%";
+        if (targetChangeTimer >= config.targetChangeDuration) setNewTarget();
+
+        // Spawn
+        spawnTimer += deltaTime;
+        const currentSpawnRate = Math.max(
+          config.minSpawnRate,
+          config.spawnRate - level * 40,
+        );
+        if (spawnTimer >= currentSpawnRate) {
+          spawnItem();
+          spawnTimer = 0;
+        }
+
+        // Oyuncu Sepeti
+        const playerY = canvas.height - 90;
+        const playerWidth = 120;
+        const grad = ctx.createLinearGradient(
+          playerX - playerWidth / 2,
+          playerY,
+          playerX + playerWidth / 2,
+          playerY,
+        );
+        grad.addColorStop(0, "#1d4ed8");
+        grad.addColorStop(1, "#60a5fa");
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(playerX - playerWidth / 2, playerY, playerWidth, 24, 12);
+        ctx.fill();
+        ctx.strokeStyle = "#93c5fd";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Parçacıklar
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= 0.02;
+          if (p.life <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Düşen Sayılar
+        for (let i = items.length - 1; i >= 0; i--) {
+          const item = items[i];
+          item.y += item.speed;
+          item.rot += item.rotSpeed;
+
+          ctx.save();
+          ctx.translate(item.x, item.y);
+          ctx.rotate(item.rot);
+
+          // Dış Halka
+          ctx.beginPath();
+          ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+          ctx.fill();
+          ctx.strokeStyle = item.color;
+          ctx.lineWidth = 5;
+          ctx.stroke();
+
+          // Sayı
+          ctx.rotate(-item.rot);
+          ctx.fillStyle = "white";
+          ctx.font = `black ${item.radius * 0.9}px Inter, Arial`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(item.value, 0, 0);
+          ctx.restore();
+
+          // Çarpışma
+          if (
+            item.y + item.radius > playerY &&
+            item.y - item.radius < playerY + 24 &&
+            item.x + item.radius > playerX - playerWidth / 2 &&
+            item.x - item.radius < playerX + playerWidth / 2
+          ) {
+            if (targetNumber % item.value === 0) {
+              combo++;
+              score += 1 * (combo > 5 ? 2 : 1);
+              sounds.correct();
+              createParticles(item.x, item.y, "#4ade80", 12);
+              updateScoreUI(true);
+            } else {
+              combo = 0;
+              lives--;
+              triggerWrongFeedback();
+              createParticles(item.x, item.y, "#ef4444", 25);
+              updateLivesUI();
+              updateScoreUI(true);
+              if (lives <= 0) {
+                gameActive = false;
+                finalScoreEl.innerText = score;
+                if (score > highScore) {
+                  highScore = score;
+                  localStorage.setItem("factorFallHighScore", highScore);
+                  highScoreEl.innerText = highScore;
+                }
+                overlay.classList.remove("hidden");
+                gameOverScreen.classList.remove("hidden");
+              }
+            }
+            items.splice(i, 1);
+            continue;
+          }
+
+          if (item.y - item.radius > canvas.height) {
+            if (targetNumber % item.value === 0) combo = 0;
+            items.splice(i, 1);
+          }
+        }
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function createParticles(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.5) * 12,
+            size: Math.random() * 6 + 2,
+            color,
+            life: 1.0,
+          });
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

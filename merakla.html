@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Merakla Matematik | İlim Sindirilir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;700&display=swap");
+      :root {
+        --dark-green: #0a4a34;
+        --mustard-yellow: #f4b41a;
+        --off-white: #ffffff;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        scroll-behavior: smooth;
+        background-color: var(--off-white);
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .playfair {
+        font-family: "Playfair Display", serif;
+      }
+
+      /* Üst Menü Yeşil Çizgi Efekti */
+      .nav-link {
+        position: relative;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-size: 15px;
+        white-space: nowrap;
+      }
+      .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 3px;
+        left: 0;
+        bottom: -5px;
+        background-color: var(--dark-green);
+        transition: all 0.3s ease;
+      }
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      /* Matematik Sembollü Hero Arka Planı */
+      .hero-bg {
+        background: linear-gradient(135deg, #0a4a34 0%, #064e3b 100%);
+        position: relative;
+        overflow: hidden;
+      }
+      .math-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.1;
+        pointer-events: none;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        font-size: 4rem;
+        color: white;
+        font-family: serif;
+      }
+
+      .section-card {
+        transition: all 0.4s ease;
+        border: 1px solid rgba(10, 74, 52, 0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      .section-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 30px -10px rgba(10, 74, 52, 0.15);
+        border-color: var(--mustard-yellow);
+      }
+
+      /* Video Wrapper */
+      .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        border-radius: 2rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+      }
+      .video-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Sosyal Medya Butonları */
+      .floating-social {
+        position: fixed;
+        right: 25px;
+        bottom: 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 100;
+      }
+      .social-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+      .social-circle:hover {
+        transform: scale(1.15);
+      }
+      .insta-color {
+        background: linear-gradient(
+          45deg,
+          #f09433,
+          #e6683c,
+          #dc2743,
+          #cc2366,
+          #bc1888
+        );
+      }
+      .yt-color {
+        background: #ff0000;
+      }
+    </style>
+  </head>
+  <body class="text-gray-900">
+    <div class="floating-social">
+      <a
+        href="https://www.youtube.com/@MeraklaMatematik"
+        target="_blank"
+        class="social-circle yt-color"
+        title="YouTube"
+      >
+        <i class="fab fa-youtube text-xl"></i>
+      </a>
+      <a
+        href="https://www.instagram.com/meraklamatematik/"
+        target="_blank"
+        class="social-circle insta-color"
+        title="Instagram"
+      >
+        <i class="fab fa-instagram text-xl"></i>
+      </a>
+    </div>
+
+    <nav
+      class="fixed top-0 w-full bg-white border-b border-gray-100 shadow-sm z-50"
+    >
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center h-32 lg:h-40">
+          <div class="flex-shrink-0 cursor-pointer">
+            <a href="merakla.html">
+              <img
+                src="MERAKLA%20MATEMATIK.jpg"
+                alt="Logo"
+                class="h-28 lg:h-36 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </a>
+          </div>
+          <div class="flex-1 flex justify-center">
+            <div class="hidden lg:flex gap-10 items-center">
+              <a
+                href="ben-kimim.html"
+                class="nav-link text-[#0a4a34] font-bold uppercase tracking-wider"
+                >Ben Kimim</a
+              >
+              <a
+                href="oyunlar.html"
+                class="nav-link text-[#0a4a34] font-bold uppercase tracking-wider"
+                >Oyunlarımız</a
+              >
+              <a
+                href="cikmis-sorular.html"
+                class="nav-link text-[#0a4a34] font-bold uppercase tracking-wider"
+                >Çıkmış Sorular</a
+              >
+              <a
+                href="ders-notlari.html"
+                class="nav-link text-[#0a4a34] font-bold uppercase tracking-wider"
+                >Dersler & Notlar</a
+              >
+              <a
+                href="pomodoro.html"
+                class="nav-link text-[#0a4a34] font-bold uppercase tracking-wider flex items-center gap-2"
+              >
+                <i class="fas fa-stopwatch text-[#f4b41a]"></i> Pomodoro
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero-bg pt-64 pb-48 px-4 text-center text-white">
+        <div class="math-pattern">
+          <span>&sum;</span> <span>&pi;</span> <span>&radic;x</span>
+          <span>&infin;</span> <span>&Delta;</span> <span>&int;</span>
+          <span>&Omega;</span> <span>&ne;</span> <span>&approx;</span>
+          <span>&theta;</span>
+        </div>
+        <h1
+          class="text-5xl md:text-7xl font-bold playfair italic relative z-10"
+        >
+          İlim bir gıda gibidir, <br />
+          <span class="text-[#f4b41a]">sindirilmesi gerekir.</span>
+        </h1>
+      </section>
+
+      <section class="max-w-5xl mx-auto px-4 -mt-24 relative z-30">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube.com/embed/ByzjZKzkg2A"
+            title="Merakla Matematik Tanıtım"
+            frameborder="0"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+            "
+            allowfullscreen
+          >
+          </iframe>
+        </div>
+      </section>
+
+      <div
+        class="max-w-7xl mx-auto px-4 py-20 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"
+      >
+        <a
+          href="ben-kimim.html"
+          class="section-card bg-white p-8 rounded-3xl text-center shadow-lg"
+        >
+          <div
+            class="w-14 h-14 bg-green-50 text-[#0a4a34] rounded-2xl flex items-center justify-center mb-4 border-b-4 border-[#f4b41a]"
+          >
+            <i class="fas fa-user-graduate text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-[#0a4a34] mb-2">Ben Kimim?</h3>
+          <p class="text-gray-500 text-[11px] leading-relaxed">
+            Eğitim yolculuğum, vizyonum ve Merakla Matematik'in hikayesi.
+          </p>
+        </a>
+
+        <a
+          href="oyunlar.html"
+          class="section-card bg-white p-8 rounded-3xl text-center shadow-lg"
+        >
+          <div
+            class="w-14 h-14 bg-green-50 text-[#0a4a34] rounded-2xl flex items-center justify-center mb-4 border-b-4 border-[#f4b41a]"
+          >
+            <i class="fas fa-brain text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-[#0a4a34] mb-2">Oyunlar</h3>
+          <p class="text-gray-500 text-[11px] leading-relaxed">
+            Matematiği eğlenerek keşfedin. Mantık ve hız odaklı interaktif
+            içerikler.
+          </p>
+        </a>
+
+        <a
+          href="cikmis-sorular.html"
+          class="section-card bg-white p-8 rounded-3xl text-center shadow-lg"
+        >
+          <div
+            class="w-14 h-14 bg-green-50 text-[#0a4a34] rounded-2xl flex items-center justify-center mb-4 border-b-4 border-[#f4b41a]"
+          >
+            <i class="fas fa-pen-nib text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-[#0a4a34] mb-2">Çıkmış Sorular</h3>
+          <p class="text-gray-500 text-[11px] leading-relaxed">
+            LGS ve YKS maratonunda karşımıza çıkan sorular
+          </p>
+        </a>
+
+        <a
+          href="ders-notlari.html"
+          class="section-card bg-white p-8 rounded-3xl text-center shadow-lg"
+        >
+          <div
+            class="w-14 h-14 bg-green-50 text-[#0a4a34] rounded-2xl flex items-center justify-center mb-4 border-b-4 border-[#f4b41a]"
+          >
+            <i class="fas fa-book text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-[#0a4a34] mb-2">Dersler</h3>
+          <p class="text-gray-500 text-[11px] leading-relaxed">
+            Konu anlatımları, özel ders notları ve ilmi sindirmenizi sağlayacak
+            dökümanlar.
+          </p>
+        </a>
+
+        <a
+          href="pomodoro.html"
+          class="section-card bg-white p-8 rounded-3xl text-center shadow-lg"
+        >
+          <div
+            class="w-14 h-14 bg-amber-50 text-[#f4b41a] rounded-2xl flex items-center justify-center mb-4 border-b-4 border-[#0a4a34]"
+          >
+            <i class="fas fa-stopwatch text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-[#0a4a34] mb-2">Pomodoro</h3>
+          <p class="text-gray-500 text-[11px] leading-relaxed">
+            Odaklanma teknikleri ile çalışma sürenizi en verimli hale getirin.
+          </p>
+        </a>
+      </div>
+    </main>
+
+    <footer class="bg-[#0a4a34] text-white/40 py-12 text-center">
+      <p class="text-xs tracking-[0.3em] uppercase">
+        © 2026 MERAKLA MATEMATİK | MURAT EREN AKGÜN
+      </p>
+    </footer>
+  </body>
+</html>
